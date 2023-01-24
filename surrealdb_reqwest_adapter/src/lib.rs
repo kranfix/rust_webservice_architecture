@@ -1,4 +1,5 @@
 pub mod query_result;
+use query_result::QueryResult;
 use serde::de::DeserializeOwned;
 
 pub struct SurrealReqwest {
@@ -23,7 +24,10 @@ impl SurrealReqwest {
     }
   }
 
-  pub async fn sql<T: DeserializeOwned>(&self, sql: impl Into<String>) -> Result<T, ()> {
+  pub async fn sql<T: DeserializeOwned>(
+    &self,
+    sql: impl Into<String>,
+  ) -> Result<Vec<QueryResult<T>>, ()> {
     let client = reqwest::Client::new()
       .post(format!("{}/sql", self.addr))
       .basic_auth(self.auth.user.clone(), Some(self.auth.pass.clone()))
@@ -31,7 +35,13 @@ impl SurrealReqwest {
       .header("DB", self.db.clone())
       .header("Accept", "Application/json")
       .body(sql.into());
-    let resp = client.send().await.unwrap().json::<T>().await.unwrap();
+    let resp = client
+      .send()
+      .await
+      .unwrap()
+      .json::<Vec<QueryResult<T>>>()
+      .await
+      .unwrap();
     Ok(resp)
   }
 }
@@ -52,6 +62,25 @@ impl Auth {
 
 #[derive(Clone)]
 pub struct Person {
-  id: String,
-  name: String,
+  pub id: String,
+  pub name: String,
 }
+
+// impl domain::User for Person {
+//   type Id = String;
+
+//   fn id(&self) -> Self::Id {
+//     self.id.clone()
+//   }
+//   fn name(&self) -> String {
+//     self.name.clone()
+//   }
+// }
+
+// impl domain::UserRepo for SurrealReqwest {
+//   type User;
+
+//   async fn create_user(&mut self, name: String) -> Self::User;
+//   async fn get_users(&self) -> &Vec<Self::User>;
+//   async fn get_user_by_id(&self, id: <Self::User as User>::Id) -> Option<Self::User>;
+//}
