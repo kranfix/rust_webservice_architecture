@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 #[macro_export]
 macro_rules! create_user_routes {
-  ($UR:ident, $user_repo:expr) => {{
+  ($user_repo:expr) => {{
     use axum::routing::get;
     use axum::Router;
     use axum_service::user_routes::{create_user, get_user_by_id, get_users};
