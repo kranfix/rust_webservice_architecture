@@ -1,12 +1,14 @@
 use axum::{routing::get, Router};
 use axum_service::{root, run_server};
 use std::sync::Arc;
-use structs_db::UserDB;
+use surrealdb_reqwest_adapter::{Auth, SurrealReqwest};
 use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() {
-  let user_repo = Arc::new(Mutex::new(UserDB::default()));
+  let auth = Auth::new("my_user", "my_pass");
+  let surreal_client = SurrealReqwest::new("my_ns", "my_db", "http://localhost:8000", auth);
+  let user_repo = Arc::new(Mutex::new(surreal_client));
   let user_routes = axum_service::create_user_routes!(user_repo);
 
   // build our application with a route
