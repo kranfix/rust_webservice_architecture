@@ -7,7 +7,7 @@ use tokio::sync::Mutex;
 #[tokio::main]
 async fn main() {
   // initialize tracing
-  let user_repo = Arc::new(Mutex::new(UserDB::new()));
+  let user_repo = Arc::new(Mutex::new(UserDB::default()));
   let user_routes = axum_service::create_user_routes!(user_repo);
 
   // build our application with a route

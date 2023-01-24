@@ -41,10 +41,10 @@ pub async fn get_users<UR: UserRepo>(State(state): State<Arc<Mutex<UR>>>) -> Jso
 
 pub async fn get_user_by_id<UR: UserRepo>(
   State(user_repo): State<Arc<Mutex<UR>>>,
-  Path(id): Path<u32>,
+  Path(id): Path<String>,
 ) -> impl IntoResponse {
   let user_repo = user_repo.lock().await;
-  match user_repo.get_user_by_id(id.into()).await {
+  match user_repo.get_user_by_id(id).await {
     Some(user) => (StatusCode::OK, Json(Some(UserReply::from(user)))),
     None => (StatusCode::NOT_FOUND, Json(None)),
   }
@@ -59,14 +59,14 @@ pub struct CreateUserPayload {
 // the output to our `create_user` handler
 #[derive(Serialize, Clone)]
 pub struct UserReply {
-  id: u32,
+  id: String,
   username: String,
 }
 
 impl<U: domain::User> From<U> for UserReply {
   fn from(value: U) -> Self {
     UserReply {
-      id: value.id().into(),
+      id: value.id(),
       username: value.name(),
     }
   }

@@ -1,24 +1,21 @@
 use domain::{async_trait, UserRepo};
+use std::collections::HashMap;
 
-pub struct UserDB(Vec<User>);
-
-impl UserDB {
-  pub fn new() -> UserDB {
-    UserDB(Vec::new())
-  }
+#[derive(Default)]
+pub struct UserDB {
+  len: usize,
+  data: HashMap<String, User>,
 }
 
 #[derive(Clone)]
 pub struct User {
-  pub id: u64,
+  pub id: String,
   pub nick: String,
 }
 
 impl domain::User for User {
-  type Id = u32;
-
-  fn id(&self) -> Self::Id {
-    self.id as u32
+  fn id(&self) -> String {
+    self.id.clone()
   }
 
   fn name(&self) -> String {
@@ -32,21 +29,18 @@ impl UserRepo for UserDB {
 
   async fn create_user(&mut self, name: String) -> Self::User {
     let user = User {
-      id: self.0.len() as u64 + 1,
+      id: (self.len as u64 + 1).to_string(),
       nick: name,
     };
-    self.0.push(user.clone());
+    self.data.insert(user.id.clone(), user.clone());
     user
   }
 
-  async fn get_users(&self) -> &Vec<Self::User> {
-    &self.0
+  async fn get_users(&self) -> Vec<Self::User> {
+    self.data.values().cloned().collect()
   }
 
-  async fn get_user_by_id(&self, id: <Self::User as domain::User>::Id) -> Option<Self::User> {
-    if id == 0 {
-      return None;
-    }
-    self.0.get(id as usize - 1).cloned()
+  async fn get_user_by_id(&self, id: String) -> Option<Self::User> {
+    self.data.get(&id).cloned()
   }
 }
