@@ -66,21 +66,11 @@ pub struct Person {
   pub name: String,
 }
 
-// impl domain::User for Person {
-//   type Id = String;
-
-//   fn id(&self) -> Self::Id {
-//     self.id.clone()
-//   }
-//   fn name(&self) -> String {
-//     self.name.clone()
-//   }
-// }
-
-// impl domain::UserRepo for SurrealReqwest {
-//   type User;
-
-//   async fn create_user(&mut self, name: String) -> Self::User;
-//   async fn get_users(&self) -> &Vec<Self::User>;
-//   async fn get_user_by_id(&self, id: <Self::User as User>::Id) -> Option<Self::User>;
-//}
+impl domain::User for Person {
+  fn id(&self) -> String {
+    self.id.clone()
+  }
+  fn name(&self) -> String {
+    self.name.clone()
+  }
+}
