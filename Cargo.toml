@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["domain", "structs_db", "axum_service"]
+members = ["domain", "structs_db", "axum_service", "surrealdb_reqwest_adapter"]
