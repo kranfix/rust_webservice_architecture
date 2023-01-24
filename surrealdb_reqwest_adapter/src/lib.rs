@@ -1,6 +1,7 @@
 pub mod query_result;
+use domain::async_trait;
 use query_result::QueryResult;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize};
 
 pub struct SurrealReqwest {
   ns: String,
@@ -60,7 +61,7 @@ impl Auth {
   }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct Person {
   pub id: String,
   pub name: String,
@@ -72,5 +73,43 @@ impl domain::User for Person {
   }
   fn name(&self) -> String {
     self.name.clone()
+  }
+}
+
+#[async_trait]
+impl domain::UserRepo for SurrealReqwest {
+  type User = Person;
+
+  async fn create_user(&mut self, name: String) -> Self::User {
+    let query_results = self
+      .sql::<Person>(format!("CREATE person SET name={name}"))
+      .await
+      .unwrap();
+    let create_result = query_results.into_iter().next().unwrap();
+    match create_result {
+      QueryResult::OK { result, .. } => result[0].clone(),
+      QueryResult::ERR { .. } => Person::default(),
+    }
+  }
+
+  async fn get_users(&self) -> Vec<Self::User> {
+    let query_results = self.sql::<Person>("SELECT * FROM person").await.unwrap();
+    let select_result = query_results.into_iter().next().unwrap();
+    match select_result {
+      QueryResult::OK { result, .. } => result,
+      QueryResult::ERR { .. } => Vec::new(),
+    }
+  }
+
+  async fn get_user_by_id(&self, id: String) -> Option<Self::User> {
+    let query_results = self
+      .sql::<Person>(format!(r#"SELECT * FROM person:"{id}""#))
+      .await
+      .unwrap();
+    let select_result = query_results.into_iter().next().unwrap();
+    match select_result {
+      QueryResult::OK { result, .. } => result.into_iter().next(),
+      QueryResult::ERR { .. } => None,
+    }
   }
 }
