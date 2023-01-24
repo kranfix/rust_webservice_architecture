@@ -13,8 +13,8 @@ macro_rules! create_user_routes {
     use axum::Router;
     use axum_service::user_routes::{create_user, get_user_by_id, get_users};
     Router::new()
-      .route("/users", get(get_users::<$UR>).post(create_user::<$UR>))
-      .route("/users/:id", get(get_user_by_id::<$UR>))
+      .route("/", get(get_users).post(create_user))
+      .route("/:id", get(get_user_by_id))
       .with_state($user_repo)
   }};
 }

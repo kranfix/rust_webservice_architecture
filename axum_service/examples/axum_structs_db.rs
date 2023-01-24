@@ -13,7 +13,7 @@ async fn main() {
   // build our application with a route
   let app = Router::new() //
     .route("/", get(root))
-    .merge(user_routes);
+    .nest("/users", user_routes);
 
   run_server(app).await
 }
