@@ -55,7 +55,7 @@ pub struct Auth {
 impl Auth {
   pub fn new(user: impl Into<String>, pass: impl Into<String>) -> Auth {
     Auth {
-      user: user.into(),
+      user: user.into()[7..].into(),
       pass: pass.into(),
     }
   }
