@@ -1,5 +1,5 @@
 pub mod query_result;
-use domain::async_trait;
+use domain::{async_trait, CreateUserError};
 use query_result::QueryResult;
 use serde::{de::DeserializeOwned, Deserialize};
 
@@ -80,15 +80,18 @@ impl domain::User for Person {
 impl domain::UserRepo for SurrealReqwest {
   type User = Person;
 
-  async fn create_user(&mut self, name: String) -> Self::User {
+  async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError> {
+    if name.trim().is_empty() {
+      return Err(CreateUserError::NameBadFormatted);
+    }
     let query_results = self
       .sql::<Person>(format!("CREATE person SET name={name}"))
       .await
-      .unwrap();
+      .map_err(|_| CreateUserError::Internal)?;
     let create_result = query_results.into_iter().next().unwrap();
     match create_result {
-      QueryResult::OK { result, .. } => result[0].clone(),
-      QueryResult::ERR { .. } => Person::default(),
+      QueryResult::OK { result, .. } => Ok(result[0].clone()),
+      QueryResult::ERR { .. } => Err(CreateUserError::Internal),
     }
   }
 

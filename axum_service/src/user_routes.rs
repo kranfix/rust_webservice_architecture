@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::reply::Reply;
+
 #[macro_export]
 macro_rules! create_user_routes {
   ($user_repo:expr) => {{
@@ -22,10 +24,22 @@ macro_rules! create_user_routes {
 pub async fn create_user<UR: UserRepo>(
   State(state): State<Arc<Mutex<UR>>>,
   Json(payload): Json<CreateUserPayload>,
-) -> Json<UserReply> {
+) -> impl IntoResponse {
   let mut user_repo = state.lock().await;
   let created_user = user_repo.create_user(payload.username).await;
-  Json(created_user.into())
+  match created_user {
+    Ok(u) => {
+      let user_reply: UserReply = u.into();
+      (StatusCode::OK, Json(Reply::data(user_reply)))
+    }
+    Err(e) => {
+      let status_code = match e {
+        domain::CreateUserError::NameBadFormatted => StatusCode::BAD_REQUEST,
+        domain::CreateUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+      };
+      (status_code, Json(Reply::err(e.to_string())))
+    }
+  }
 }
 
 pub async fn get_users<UR: UserRepo>(State(state): State<Arc<Mutex<UR>>>) -> Json<Vec<UserReply>> {
