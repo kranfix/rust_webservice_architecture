@@ -1,4 +1,5 @@
 pub use async_trait::async_trait;
+use thiserror::Error;
 
 #[async_trait]
 pub trait UserRepo {
@@ -12,4 +13,14 @@ pub trait UserRepo {
 pub trait User: Clone {
   fn id(&self) -> String;
   fn name(&self) -> String;
+}
+
+#[derive(Error, Debug)]
+pub enum CreateUserError {
+  #[error("Name is bad formatted")]
+  NameBadFormatted,
+  #[error("Internal error :(")]
+  Internal,
+  // #[error("User {0} already exist")]
+  // UserAlreadyExist(String),
 }
