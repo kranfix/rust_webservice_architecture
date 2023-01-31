@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::reply::Reply;
+
 #[macro_export]
 macro_rules! create_user_routes {
   ($user_repo:expr) => {{
@@ -22,21 +24,39 @@ macro_rules! create_user_routes {
 pub async fn create_user<UR: UserRepo>(
   State(state): State<Arc<Mutex<UR>>>,
   Json(payload): Json<CreateUserPayload>,
-) -> Json<UserReply> {
+) -> impl IntoResponse {
   let mut user_repo = state.lock().await;
   let created_user = user_repo.create_user(payload.username).await;
-  Json(created_user.into())
+  match created_user {
+    Ok(u) => {
+      let user_reply: UserReply = u.into();
+      (StatusCode::OK, Json(Reply::data(user_reply)))
+    }
+    Err(e) => {
+      let status_code = match e {
+        domain::CreateUserError::NameBadFormatted => StatusCode::BAD_REQUEST,
+        domain::CreateUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+      };
+      (status_code, Json(Reply::err(e.to_string())))
+    }
+  }
 }
 
-pub async fn get_users<UR: UserRepo>(State(state): State<Arc<Mutex<UR>>>) -> Json<Vec<UserReply>> {
+pub async fn get_users<UR: UserRepo>(
+  State(state): State<Arc<Mutex<UR>>>,
+) -> (StatusCode, Json<Reply<Vec<UserReply>>>) {
   let state = state.lock().await;
-  let users = state.get_users().await;
-  Json(
-    users
-      .iter()
-      .map(|u| UserReply::from(u.clone()))
-      .collect::<Vec<_>>(),
-  )
+  let users = match state.get_users().await {
+    Ok(users) => users,
+    Err(e) => {
+      return (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(Reply::err(e.to_string())),
+      )
+    }
+  };
+  let reply = users.into_iter().map(UserReply::from).collect::<Vec<_>>();
+  (StatusCode::OK, Json(Reply::data(reply)))
 }
 
 pub async fn get_user_by_id<UR: UserRepo>(
@@ -44,10 +64,16 @@ pub async fn get_user_by_id<UR: UserRepo>(
   Path(id): Path<String>,
 ) -> impl IntoResponse {
   let user_repo = user_repo.lock().await;
-  match user_repo.get_user_by_id(id).await {
-    Some(user) => (StatusCode::OK, Json(Some(UserReply::from(user)))),
-    None => (StatusCode::NOT_FOUND, Json(None)),
-  }
+  let err = match user_repo.get_user_by_id(id).await {
+    Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
+    Err(e) => e,
+  };
+
+  let status_code = match &err {
+    domain::GetUsersByIdError::NotFound(_) => StatusCode::NOT_FOUND,
+    domain::GetUsersByIdError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+  };
+  (status_code, Json(Reply::err(err.to_string())))
 }
 
 // the input to our `create_user` handler

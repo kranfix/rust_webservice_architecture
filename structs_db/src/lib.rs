@@ -1,4 +1,4 @@
-use domain::{async_trait, UserRepo};
+use domain::{async_trait, CreateUserError, GetUsersByIdError, GetUsersError, UserRepo};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -27,20 +27,24 @@ impl domain::User for User {
 impl UserRepo for UserDB {
   type User = User;
 
-  async fn create_user(&mut self, name: String) -> Self::User {
+  async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError> {
     let user = User {
       id: (self.len as u64 + 1).to_string(),
       nick: name,
     };
     self.data.insert(user.id.clone(), user.clone());
-    user
+    Ok(user)
   }
 
-  async fn get_users(&self) -> Vec<Self::User> {
-    self.data.values().cloned().collect()
+  async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError> {
+    Ok(self.data.values().cloned().collect())
   }
 
-  async fn get_user_by_id(&self, id: String) -> Option<Self::User> {
-    self.data.get(&id).cloned()
+  async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError> {
+    self
+      .data
+      .get(&id)
+      .cloned()
+      .ok_or(GetUsersByIdError::NotFound(id))
   }
 }
