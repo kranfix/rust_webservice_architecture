@@ -6,7 +6,7 @@ pub trait UserRepo {
   type User: User;
 
   async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError>;
-  async fn get_users(&self) -> Vec<Self::User>;
+  async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError>;
   async fn get_user_by_id(&self, id: String) -> Option<Self::User>;
 }
 
@@ -23,4 +23,10 @@ pub enum CreateUserError {
   Internal,
   // #[error("User {0} already exist")]
   // UserAlreadyExist(String),
+}
+
+#[derive(Error, Debug)]
+pub enum GetUsersError {
+  #[error("Internal error :(")]
+  Internal,
 }

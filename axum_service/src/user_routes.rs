@@ -42,15 +42,21 @@ pub async fn create_user<UR: UserRepo>(
   }
 }
 
-pub async fn get_users<UR: UserRepo>(State(state): State<Arc<Mutex<UR>>>) -> Json<Vec<UserReply>> {
+pub async fn get_users<UR: UserRepo>(
+  State(state): State<Arc<Mutex<UR>>>,
+) -> (StatusCode, Json<Reply<Vec<UserReply>>>) {
   let state = state.lock().await;
-  let users = state.get_users().await;
-  Json(
-    users
-      .iter()
-      .map(|u| UserReply::from(u.clone()))
-      .collect::<Vec<_>>(),
-  )
+  let users = match state.get_users().await {
+    Ok(users) => users,
+    Err(e) => {
+      return (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(Reply::err(e.to_string())),
+      )
+    }
+  };
+  let reply = users.into_iter().map(UserReply::from).collect::<Vec<_>>();
+  (StatusCode::OK, Json(Reply::data(reply)))
 }
 
 pub async fn get_user_by_id<UR: UserRepo>(

@@ -3,7 +3,7 @@ pub mod query_result;
 
 pub use client::SurrealReqwest;
 pub use client::*;
-use domain::{async_trait, CreateUserError};
+use domain::{async_trait, CreateUserError, GetUsersError};
 use query_result::QueryResult;
 use serde::Deserialize;
 
@@ -41,12 +41,12 @@ impl domain::UserRepo for SurrealReqwest {
     }
   }
 
-  async fn get_users(&self) -> Vec<Self::User> {
+  async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError> {
     let query_results = self.sql::<Person>("SELECT * FROM person").await.unwrap();
     let select_result = query_results.into_iter().next().unwrap();
     match select_result {
-      QueryResult::OK { result, .. } => result,
-      QueryResult::ERR { .. } => Vec::new(),
+      QueryResult::OK { result, .. } => Ok(result),
+      QueryResult::ERR { .. } => Err(GetUsersError::Internal),
     }
   }
 
