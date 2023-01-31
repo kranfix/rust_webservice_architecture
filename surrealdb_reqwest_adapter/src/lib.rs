@@ -3,7 +3,7 @@ pub mod query_result;
 
 pub use client::SurrealReqwest;
 pub use client::*;
-use domain::{async_trait, CreateUserError, GetUsersError};
+use domain::{async_trait, CreateUserError, GetUsersByIdError, GetUsersError};
 use query_result::QueryResult;
 use serde::Deserialize;
 
@@ -50,15 +50,19 @@ impl domain::UserRepo for SurrealReqwest {
     }
   }
 
-  async fn get_user_by_id(&self, id: String) -> Option<Self::User> {
+  async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError> {
     let query_results = self
       .sql::<Person>(format!(r#"SELECT * FROM person:"{id}""#))
       .await
       .unwrap();
-    let select_result = query_results.into_iter().next().unwrap();
-    match select_result {
+    let select_result = query_results
+      .into_iter()
+      .next()
+      .ok_or(GetUsersByIdError::Internal)?;
+    let person = match select_result {
       QueryResult::OK { result, .. } => result.into_iter().next(),
-      QueryResult::ERR { .. } => None,
-    }
+      QueryResult::ERR { .. } => return Err(GetUsersByIdError::Internal),
+    };
+    Ok(person.ok_or(GetUsersByIdError::NotFound(id))?)
   }
 }

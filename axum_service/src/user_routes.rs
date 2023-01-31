@@ -64,10 +64,16 @@ pub async fn get_user_by_id<UR: UserRepo>(
   Path(id): Path<String>,
 ) -> impl IntoResponse {
   let user_repo = user_repo.lock().await;
-  match user_repo.get_user_by_id(id).await {
-    Some(user) => (StatusCode::OK, Json(Some(UserReply::from(user)))),
-    None => (StatusCode::NOT_FOUND, Json(None)),
-  }
+  let err = match user_repo.get_user_by_id(id).await {
+    Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
+    Err(e) => e,
+  };
+
+  let status_code = match &err {
+    domain::GetUsersByIdError::NotFound(_) => StatusCode::NOT_FOUND,
+    domain::GetUsersByIdError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+  };
+  (status_code, Json(Reply::err(err.to_string())))
 }
 
 // the input to our `create_user` handler

@@ -7,7 +7,7 @@ pub trait UserRepo {
 
   async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError>;
   async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError>;
-  async fn get_user_by_id(&self, id: String) -> Option<Self::User>;
+  async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError>;
 }
 
 pub trait User: Clone {
@@ -27,6 +27,14 @@ pub enum CreateUserError {
 
 #[derive(Error, Debug)]
 pub enum GetUsersError {
+  #[error("Internal error :(")]
+  Internal,
+}
+
+#[derive(Error, Debug)]
+pub enum GetUsersByIdError {
+  #[error("User with id={0} not found")]
+  NotFound(String),
   #[error("Internal error :(")]
   Internal,
 }
