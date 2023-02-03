@@ -42,8 +42,14 @@ impl domain::UserRepo for SurrealReqwest {
   }
 
   async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError> {
-    let query_results = self.sql::<Person>("SELECT * FROM person").await.unwrap();
-    let select_result = query_results.into_iter().next().unwrap();
+    let select_result = self
+      .sql::<Person>("SELECT * FROM person")
+      .await
+      .map_err(|_| GetUsersError::Internal)?
+      .into_iter()
+      .next()
+      .ok_or(GetUsersError::Internal)?;
+
     match select_result {
       QueryResult::OK { result, .. } => Ok(result),
       QueryResult::ERR { .. } => Err(GetUsersError::Internal),
@@ -51,11 +57,10 @@ impl domain::UserRepo for SurrealReqwest {
   }
 
   async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError> {
-    let query_results = self
+    let select_result = self
       .sql::<Person>(format!(r#"SELECT * FROM person:"{id}""#))
       .await
-      .unwrap();
-    let select_result = query_results
+      .map_err(|_| GetUsersByIdError::Internal)?
       .into_iter()
       .next()
       .ok_or(GetUsersByIdError::Internal)?;
