@@ -34,10 +34,15 @@ impl domain::UserRepo for SurrealReqwest {
       .sql::<Person>(format!("CREATE person SET name={name}"))
       .await
       .map_err(|_| CreateUserError::Internal)?;
-    let create_result = query_results.into_iter().next().unwrap();
+    let create_result = query_results
+      .into_iter()
+      .next()
+      .ok_or(CreateUserError::Internal)?;
     match create_result {
-      QueryResult::OK { result, .. } => Ok(result[0].clone()),
-      QueryResult::ERR { .. } => Err(CreateUserError::Internal),
+      QueryResult::OK { result, .. } => {
+        Ok(result.into_iter().next().ok_or(CreateUserError::Internal)?)
+      }
+      QueryResult::ERR { .. } => return Err(CreateUserError::Internal),
     }
   }
 
