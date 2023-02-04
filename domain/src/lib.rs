@@ -1,3 +1,4 @@
+pub mod common_types;
 pub use async_trait::async_trait;
 use thiserror::Error;
 

@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.61"
 thiserror = "1.0.38"
+regex = "1.7.1"
