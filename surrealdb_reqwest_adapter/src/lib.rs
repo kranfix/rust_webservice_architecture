@@ -3,7 +3,7 @@ pub mod query_result;
 
 pub use client::SurrealReqwest;
 pub use client::*;
-use domain::{async_trait, CreateUserError, GetUsersByIdError, GetUsersError};
+use domain::{async_trait, CreateUserError, DeleteUserError, GetUsersByIdError, GetUsersError};
 use query_result::QueryResult;
 use serde::Deserialize;
 
@@ -74,5 +74,9 @@ impl domain::UserRepo for SurrealReqwest {
       QueryResult::ERR { .. } => return Err(GetUsersByIdError::Internal),
     };
     Ok(person.ok_or(GetUsersByIdError::NotFound(id))?)
+  }
+
+  async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
+    todo!()
   }
 }
