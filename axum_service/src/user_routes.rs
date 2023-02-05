@@ -13,10 +13,10 @@ macro_rules! create_user_routes {
   ($user_repo:expr) => {{
     use axum::routing::get;
     use axum::Router;
-    use axum_service::user_routes::{create_user, get_user_by_id, get_users};
+    use axum_service::user_routes::{create_user, delete_user, get_user_by_id, get_users};
     Router::new()
       .route("/", get(get_users).post(create_user))
-      .route("/:id", get(get_user_by_id))
+      .route("/:id", get(get_user_by_id).delete(delete_user))
       .with_state($user_repo)
   }};
 }
@@ -72,6 +72,26 @@ pub async fn get_user_by_id<UR: UserRepo>(
   let status_code = match &err {
     domain::GetUsersByIdError::NotFound(_) => StatusCode::NOT_FOUND,
     domain::GetUsersByIdError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+  };
+  (status_code, Json(Reply::err(err.to_string())))
+}
+
+pub async fn delete_user<UR: UserRepo>(
+  State(user_repo): State<Arc<Mutex<UR>>>,
+  Path(id): Path<String>,
+) -> impl IntoResponse {
+  let res = {
+    let mut user_repo = user_repo.lock().await;
+    user_repo.delete_user(id).await
+  };
+  let err = match res {
+    Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
+    Err(e) => e,
+  };
+
+  let status_code = match &err {
+    domain::DeleteUserError::UserNotFound(_) => StatusCode::NOT_FOUND,
+    domain::DeleteUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
   };
   (status_code, Json(Reply::err(err.to_string())))
 }

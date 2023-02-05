@@ -1,4 +1,6 @@
-use domain::{async_trait, CreateUserError, GetUsersByIdError, GetUsersError, UserRepo};
+use domain::{
+  async_trait, CreateUserError, DeleteUserError, GetUsersByIdError, GetUsersError, UserRepo,
+};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -46,5 +48,13 @@ impl UserRepo for UserDB {
       .get(&id)
       .cloned()
       .ok_or(GetUsersByIdError::NotFound(id))
+  }
+
+  async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError> {
+    let deleted_user = self
+      .data
+      .remove(&id)
+      .ok_or(DeleteUserError::UserNotFound(id))?;
+    Ok(deleted_user)
   }
 }
