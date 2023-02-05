@@ -50,9 +50,11 @@ impl UserRepo for UserDB {
       .ok_or(GetUsersByIdError::NotFound(id))
   }
 
-  async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
-    // let a = self.data.remove(&id);
-
-    todo!()
+  async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError> {
+    let deleted_user = self
+      .data
+      .remove(&id)
+      .ok_or(DeleteUserError::UserNotFound(id))?;
+    Ok(deleted_user)
   }
 }

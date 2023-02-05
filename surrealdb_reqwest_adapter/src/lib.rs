@@ -76,7 +76,7 @@ impl domain::UserRepo for SurrealReqwest {
     Ok(person.ok_or(GetUsersByIdError::NotFound(id))?)
   }
 
-  async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
+  async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError> {
     let delete_result = self
       .sql::<Person>(format!(r#"DELETE person:{id} RETURN before"#))
       .await
