@@ -25,8 +25,10 @@ pub async fn create_user<UR: UserRepo>(
   State(state): State<Arc<Mutex<UR>>>,
   Json(payload): Json<CreateUserPayload>,
 ) -> impl IntoResponse {
-  let mut user_repo = state.lock().await;
-  let created_user = user_repo.create_user(payload.username).await;
+  let created_user = {
+    let mut user_repo = state.lock().await;
+    user_repo.create_user(payload.username).await
+  };
   match created_user {
     Ok(u) => {
       let user_reply: UserReply = u.into();
@@ -45,8 +47,12 @@ pub async fn create_user<UR: UserRepo>(
 pub async fn get_users<UR: UserRepo>(
   State(state): State<Arc<Mutex<UR>>>,
 ) -> (StatusCode, Json<Reply<Vec<UserReply>>>) {
-  let state = state.lock().await;
-  let users = match state.get_users().await {
+  let users_result = {
+    let state = state.lock().await;
+    state.get_users().await
+  };
+
+  let users = match users_result {
     Ok(users) => users,
     Err(e) => {
       return (
@@ -63,8 +69,11 @@ pub async fn get_user_by_id<UR: UserRepo>(
   State(user_repo): State<Arc<Mutex<UR>>>,
   Path(id): Path<String>,
 ) -> impl IntoResponse {
-  let user_repo = user_repo.lock().await;
-  let err = match user_repo.get_user_by_id(id).await {
+  let result = {
+    let user_repo = user_repo.lock().await;
+    user_repo.get_user_by_id(id).await
+  };
+  let err = match result {
     Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
     Err(e) => e,
   };
