@@ -1,0 +1,16 @@
+[package]
+name = "cli_ent"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.1.4", features = ["derive"] }
+domain = { path = "../domain" }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.69"
+
+[dev-dependencies]
+structs_db = { path = "../structs_db" }
+surrealdb_reqwest_adapter = { path = "../surrealdb_reqwest_adapter" }
