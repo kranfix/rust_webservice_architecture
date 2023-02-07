@@ -35,6 +35,7 @@ impl UserRepo for UserDB {
       nick: name,
     };
     self.data.insert(user.id.clone(), user.clone());
+    self.len += 1;
     Ok(user)
   }
 
