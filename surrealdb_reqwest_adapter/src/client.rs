@@ -33,7 +33,7 @@ impl SurrealReqwest {
       .basic_auth(self.auth.user.clone(), Some(self.auth.pass.clone()))
       .header("NS", self.ns.clone())
       .header("DB", self.db.clone())
-      .header("Accept", "Application/json")
+      .header("Accept", "application/json")
       .body(sql.into());
     let resp = client
       .send()

@@ -31,7 +31,7 @@ impl domain::UserRepo for SurrealReqwest {
       return Err(CreateUserError::NameBadFormatted);
     }
     let query_results = self
-      .sql::<Person>(format!("CREATE person SET name={name}"))
+      .sql::<Person>(format!(r#"CREATE person SET name="{name}""#))
       .await
       .map_err(|_| CreateUserError::Internal)?;
     let create_result = query_results
