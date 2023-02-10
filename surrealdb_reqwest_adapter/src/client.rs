@@ -28,20 +28,21 @@ impl SurrealReqwest {
     &self,
     sql: impl Into<String>,
   ) -> Result<Vec<QueryResult<T>>, ()> {
-    let client = reqwest::Client::new()
+    let client = reqwest::Client::new();
+    let reqwest = client
       .post(format!("{}/sql", self.addr))
       .basic_auth(self.auth.user.clone(), Some(self.auth.pass.clone()))
       .header("NS", self.ns.clone())
       .header("DB", self.db.clone())
       .header("Accept", "application/json")
       .body(sql.into());
-    let resp = client
+    let resp = reqwest
       .send()
       .await
-      .unwrap()
+      .expect("HTTP ERROR")
       .json::<Vec<QueryResult<T>>>()
       .await
-      .unwrap();
+      .expect("QueryResult parse error");
     Ok(resp)
   }
 }
@@ -54,7 +55,7 @@ pub struct Auth {
 impl Auth {
   pub fn new(user: impl Into<String>, pass: impl Into<String>) -> Auth {
     Auth {
-      user: user.into()[7..].into(),
+      user: user.into(),
       pass: pass.into(),
     }
   }
