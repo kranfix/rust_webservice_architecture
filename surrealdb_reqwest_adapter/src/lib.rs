@@ -18,7 +18,7 @@ impl domain::User for Person {
     self.id.clone()
   }
   fn name(&self) -> String {
-    self.name.clone()
+    self.name[7..].to_string()
   }
 }
 
