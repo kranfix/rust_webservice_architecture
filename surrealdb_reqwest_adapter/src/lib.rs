@@ -63,7 +63,7 @@ impl domain::UserRepo for SurrealReqwest {
 
   async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError> {
     let select_result = self
-      .sql::<Person>(format!(r#"SELECT * FROM person:"{id}""#))
+      .sql::<Person>(format!(r#"SELECT * FROM person:{id}"#))
       .await
       .map_err(|_| GetUsersByIdError::Internal)?
       .into_iter()
