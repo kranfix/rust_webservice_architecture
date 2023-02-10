@@ -15,10 +15,10 @@ pub struct Person {
 
 impl domain::User for Person {
   fn id(&self) -> String {
-    self.id.clone()
+    self.id[7..].to_string()
   }
   fn name(&self) -> String {
-    self.name[7..].to_string()
+    self.name.clone()
   }
 }
 
