@@ -11,5 +11,6 @@ members = [
   "structs_db",
   "axum_service",
   "surrealdb_reqwest_adapter",
-  "cli_ent"
+  "cli_ent",
+  "users_yew"
 ]
