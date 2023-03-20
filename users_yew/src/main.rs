@@ -1,36 +1,34 @@
+mod user_form;
 mod user_list;
-use crate::user_list::{User, UserList};
-use web_sys::HtmlInputElement;
-use yew::{html::IntoPropValue, prelude::*};
+
+use crate::user_list::{UserList, UserListAction, UserListState};
+use user_form::UserForm;
+use yew::prelude::*;
 
 #[function_component]
 fn App() -> Html {
-  let input_node_ref = use_node_ref();
-  let name = use_state(String::default);
-  let oninput = {
-    let name = name.clone();
-    let input_node_ref = input_node_ref.clone();
-    move |e: InputEvent| {
-      let input = input_node_ref.cast::<HtmlInputElement>();
-
-      if let Some(input) = input {
-        name.set(input.value().trim().into());
-      }
-    }
+  let users = use_reducer(UserListState::default);
+  let on_add = {
+    let users = users.clone();
+    Callback::from(move |name: String| {
+      let action = UserListAction::Add(name.clone());
+      users.dispatch(action);
+    })
   };
 
-  let mut users = Vec::new();
-  //users.push(User {
-  //  id: "abc".to_string(),
-  //  name: "Frank".to_string(),
-  //});
+  let on_delete = {
+    let users = users.clone();
+    Callback::from(move |id: String| {
+      let action = UserListAction::Rm(id.clone());
+      users.dispatch(action);
+    })
+  };
 
   html! {
       <div>
           <h1> { "Usuarios" } </h1>
-          <input ref={input_node_ref} type="text" {oninput}/>
-          <button disabled={name.is_empty()}>{ "Add user" }</button>
-          <UserList {users}/>
+          <UserForm {on_add}/>
+          <UserList users={users.list.clone()} {on_delete} />
       </div>
   }
 }
