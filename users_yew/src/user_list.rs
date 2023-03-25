@@ -1,10 +1,10 @@
 use yew::prelude::*;
 
-#[derive(PartialEq, Properties)]
-pub struct Props {
-  pub users: Vec<User>,
-  pub on_delete: Callback<String>,
-}
+// #[derive(PartialEq, Properties)]
+// pub struct Props {
+//   pub users: Vec<User>,
+//   pub on_delete: Callback<String>,
+// }
 
 #[derive(PartialEq, Clone)]
 pub struct User {
@@ -13,22 +13,30 @@ pub struct User {
 }
 
 #[function_component]
-pub fn UserList(props: &Props) -> Html {
-  let users = props.users.clone();
-  let on_delete = props.on_delete.clone();
+pub fn UserList() -> Html {
+  //let users = props.users.clone();
+  let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
+  //let on_delete = props.on_delete.clone();
+  let on_delete = {
+    let users = users.clone();
+    move |id: String| {
+      let action = UserListAction::Rm(id.clone());
+      users.dispatch(action);
+    }
+  };
   html! {
       <div>
-        if users.is_empty(){
+        if users.list.is_empty(){
           <p>{ "Please add users" }</p>
         } else {
           <ul>
             {
-              users.into_iter().map(|u| {
+              users.list.iter().map(|u| {
                 let on_delete = on_delete.clone();
                 let id = u.id.clone();
                 let onclick = {
                   move |_| {
-                    on_delete.clone().emit(id.clone());
+                    on_delete.clone()(id.clone());
                   }
                 };
                 html!(
@@ -50,7 +58,7 @@ fn UserCard() -> Html {
   html! {}
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct UserListState {
   pub list: Vec<User>,
 }

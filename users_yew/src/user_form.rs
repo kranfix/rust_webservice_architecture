@@ -1,13 +1,15 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-#[derive(PartialEq, Properties)]
-pub struct Props {
-  pub on_add: Callback<String>,
-}
+use crate::user_list::{UserListAction, UserListState};
+
+// #[derive(PartialEq, Properties)]
+// pub struct Props {
+//   pub on_add: Callback<String>,
+// }
 
 #[function_component]
-pub fn UserForm(props: &Props) -> Html {
+pub fn UserForm() -> Html {
   let input_node_ref = use_node_ref();
   let name = use_state(String::default);
   let oninput = {
@@ -22,11 +24,14 @@ pub fn UserForm(props: &Props) -> Html {
     }
   };
 
+  let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
+
   let onclick = {
-    let on_add = props.on_add.clone();
+    //let on_add = props.on_add.clone();
     let name = (*name).clone();
     move |_| {
-      on_add.emit(name.clone());
+      let action = UserListAction::Add(name.clone());
+      users.clone().dispatch(action);
     }
   };
 
