@@ -11,7 +11,7 @@ pub struct Props {
 pub fn UserListStateProvider(props: &Props) -> Html {
   let users = use_reducer(UserListState::default);
   html! {
-    <ContextProvider<UseReducerHandle<UserListState>> context={users.clone()}>
+    <ContextProvider<UseReducerHandle<UserListState>> context={users}>
       {for props.children.iter()}
     </ContextProvider<UseReducerHandle<UserListState>>>
   }

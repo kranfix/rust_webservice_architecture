@@ -24,21 +24,42 @@ pub fn UserForm() -> Html {
     }
   };
 
+  let clear_text = {
+    let name = name.clone();
+    Callback::from(move |_: ()| {
+      name.set("".to_string());
+    })
+  };
+
+  let name = { (*name).clone() };
+  html! {
+    <>
+      <input ref={input_node_ref} type="text" {oninput} value={name.clone()}/>
+      <AddUserButton name={name} on_added={clear_text}/>
+    </>
+  }
+}
+#[derive(PartialEq, Properties)]
+pub struct AddUserButtonProps {
+  name: String,
+  on_added: Callback<()>,
+}
+
+#[function_component]
+fn AddUserButton(props: &AddUserButtonProps) -> Html {
   let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
 
   let onclick = {
-    //let on_add = props.on_add.clone();
-    let name = (*name).clone();
+    let name = props.name.clone();
+    let on_added = props.on_added.clone();
     move |_| {
       let action = UserListAction::Add(name.clone());
       users.clone().dispatch(action);
+      on_added.clone().emit(())
     }
   };
 
-  html! {
-    <>
-      <input ref={input_node_ref} type="text" {oninput}/>
-      <button disabled={name.is_empty()} {onclick}>{ "Add user" }</button>
-    </>
-  }
+  html!(
+    <button disabled={props.name.is_empty()} {onclick}>{ "Add user" }</button>
+  )
 }
