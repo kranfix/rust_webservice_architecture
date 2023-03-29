@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use js_sys::JsString;
 use reqwest::header::{ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE};
 use web_sys::console;
