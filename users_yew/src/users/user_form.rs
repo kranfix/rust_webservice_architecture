@@ -1,12 +1,7 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::user_list::{UserListAction, UserListState};
-
-// #[derive(PartialEq, Properties)]
-// pub struct Props {
-//   pub on_add: Callback<String>,
-// }
+use crate::users::user_list::{UserListAction, UserListState};
 
 #[function_component]
 pub fn UserForm() -> Html {

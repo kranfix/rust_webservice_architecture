@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::user_list::UserListState;
+use crate::users::user_list::UserListState;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
