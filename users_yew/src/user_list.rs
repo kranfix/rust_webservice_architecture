@@ -1,11 +1,5 @@
 use yew::prelude::*;
 
-// #[derive(PartialEq, Properties)]
-// pub struct Props {
-//   pub users: Vec<User>,
-//   pub on_delete: Callback<String>,
-// }
-
 #[derive(PartialEq, Clone)]
 pub struct User {
   pub id: String,
