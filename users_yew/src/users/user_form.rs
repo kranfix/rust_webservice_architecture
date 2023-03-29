@@ -1,7 +1,7 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::users::user_list::{UserListAction, UserListState};
+use crate::users::{UserListAction, UserListState};
 
 #[function_component]
 pub fn UserForm() -> Html {
