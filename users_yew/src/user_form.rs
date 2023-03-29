@@ -34,7 +34,13 @@ pub fn UserForm() -> Html {
   let name = { (*name).clone() };
   html! {
     <>
-      <input ref={input_node_ref} type="text" {oninput} value={name.clone()}/>
+      <form>
+        <div class="mb-3">
+          <input ref={input_node_ref} type="text" {oninput} value={name.clone()} class="form-control" aria-describedby="emailHelp"/>
+          <div id="emailHelp" class="form-text">{"Name"}</div>
+        </div>
+      </form>
+
       <AddUserButton name={name} on_added={clear_text}/>
     </>
   }
@@ -60,6 +66,6 @@ fn AddUserButton(props: &AddUserButtonProps) -> Html {
   };
 
   html!(
-    <button disabled={props.name.is_empty()} {onclick}>{ "Add user" }</button>
+    <button disabled={props.name.is_empty()} {onclick}  type="button" class="btn btn-primary">{ "Add user" }</button>
   )
 }

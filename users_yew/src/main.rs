@@ -9,7 +9,7 @@ use yew::prelude::*;
 #[function_component]
 fn App() -> Html {
   html! {
-      <div>
+      <div class="container">
           <h1> { "Usuarios" } </h1>
           <UserListStateProvider>
             <UserForm />

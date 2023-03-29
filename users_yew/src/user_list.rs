@@ -25,11 +25,11 @@ pub fn UserList() -> Html {
     }
   };
   html! {
-      <div>
+      <div class="mt-4">
         if users.list.is_empty(){
-          <p>{ "Please add users" }</p>
+          <div id="emailHelp" class="form-text">{ "Please add users" }</div>
         } else {
-          <ul>
+          <ul class="list-group">
             {
               users.list.iter().map(|u| {
                 let on_delete = on_delete.clone();
@@ -40,10 +40,18 @@ pub fn UserList() -> Html {
                   }
                 };
                 html!(
-                  <li>
-                    {u.name.clone()}
-                    <button {onclick}>{ "X" }</button>
-                  </li>
+                  <div class="container text-start">
+                    <div class="row align-items-center">
+                      <div class="col mt-1">
+                        <li class="list-group-item">
+                          {u.name.clone()}
+                        </li>
+                      </div>
+                      <div class="col mb-1">
+                        <button {onclick} type="button" class="btn btn-outline-danger">{ "X" }</button>
+                      </div>
+                    </div>
+                  </div>
                 )
               }).collect::<Html>()
             }
