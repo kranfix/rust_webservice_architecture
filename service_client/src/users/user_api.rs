@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 // the output to our `create_user` handler
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserReply {
-  id: String,
-  username: String,
+  pub id: String,
+  pub username: String,
 }
 
 // the input to our `create_user` handler
