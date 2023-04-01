@@ -2,11 +2,9 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use domain::UserRepo;
-use serde::{Deserialize, Serialize};
+use service_client::{CreateUserPayload, Reply, UserReply};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-use crate::reply::Reply;
 
 #[macro_export]
 macro_rules! create_user_routes {
@@ -103,26 +101,4 @@ pub async fn delete_user<UR: UserRepo>(
     domain::DeleteUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
   };
   (status_code, Json(Reply::err(err.to_string())))
-}
-
-// the input to our `create_user` handler
-#[derive(Deserialize)]
-pub struct CreateUserPayload {
-  username: String,
-}
-
-// the output to our `create_user` handler
-#[derive(Serialize, Clone)]
-pub struct UserReply {
-  id: String,
-  username: String,
-}
-
-impl<U: domain::User> From<U> for UserReply {
-  fn from(value: U) -> Self {
-    UserReply {
-      id: value.id(),
-      username: value.name(),
-    }
-  }
 }

@@ -7,6 +7,15 @@ pub struct UserReply {
   pub username: String,
 }
 
+impl<U: domain::User> From<U> for UserReply {
+  fn from(value: U) -> Self {
+    UserReply {
+      id: value.id(),
+      username: value.name(),
+    }
+  }
+}
+
 // the input to our `create_user` handler
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateUserPayload {
