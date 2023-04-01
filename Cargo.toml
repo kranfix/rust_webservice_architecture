@@ -10,6 +10,7 @@ members = [
   "domain",
   "structs_db",
   "axum_service",
+  "service_client",
   "surrealdb_reqwest_adapter",
   "cli_ent",
   "users_yew"
