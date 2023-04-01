@@ -12,6 +12,7 @@ tokio = {version="1.24.1", features=["full"]}
 tracing = "0.1"
 domain = { path="../domain" }
 tower-http = {version="0.4.0", features=["cors"]}
+service_client = { path="../service_client" }
 
 [dev-dependencies]
 structs_db = { path="../structs_db" }
