@@ -30,14 +30,14 @@ pub async fn create_user<UR: UserRepo>(
   match created_user {
     Ok(u) => {
       let user_reply: UserReply = u.into();
-      (StatusCode::OK, Json(Reply::data(user_reply)))
+      (StatusCode::OK, Json(Reply::Data(user_reply)))
     }
     Err(e) => {
       let status_code = match e {
         domain::CreateUserError::NameBadFormatted => StatusCode::BAD_REQUEST,
         domain::CreateUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
       };
-      (status_code, Json(Reply::err(e.to_string())))
+      (status_code, Json(Reply::Err(e.to_string())))
     }
   }
 }
@@ -55,12 +55,12 @@ pub async fn get_users<UR: UserRepo>(
     Err(e) => {
       return (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(Reply::err(e.to_string())),
+        Json(Reply::Err(e.to_string())),
       )
     }
   };
   let reply = users.into_iter().map(UserReply::from).collect::<Vec<_>>();
-  (StatusCode::OK, Json(Reply::data(reply)))
+  (StatusCode::OK, Json(Reply::Data(reply)))
 }
 
 pub async fn get_user_by_id<UR: UserRepo>(
@@ -72,7 +72,7 @@ pub async fn get_user_by_id<UR: UserRepo>(
     user_repo.get_user_by_id(id).await
   };
   let err = match result {
-    Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
+    Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
     Err(e) => e,
   };
 
@@ -80,7 +80,7 @@ pub async fn get_user_by_id<UR: UserRepo>(
     domain::GetUsersByIdError::NotFound(_) => StatusCode::NOT_FOUND,
     domain::GetUsersByIdError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
   };
-  (status_code, Json(Reply::err(err.to_string())))
+  (status_code, Json(Reply::Err(err.to_string())))
 }
 
 pub async fn delete_user<UR: UserRepo>(
@@ -92,7 +92,7 @@ pub async fn delete_user<UR: UserRepo>(
     user_repo.delete_user(id).await
   };
   let err = match res {
-    Ok(user) => return (StatusCode::OK, Json(Reply::data(UserReply::from(user)))),
+    Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
     Err(e) => e,
   };
 
@@ -100,5 +100,5 @@ pub async fn delete_user<UR: UserRepo>(
     domain::DeleteUserError::UserNotFound(_) => StatusCode::NOT_FOUND,
     domain::DeleteUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
   };
-  (status_code, Json(Reply::err(err.to_string())))
+  (status_code, Json(Reply::Err(err.to_string())))
 }
