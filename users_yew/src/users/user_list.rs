@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use yew::prelude::*;
 
 use crate::users::{UserListAction, UserListState};
@@ -6,14 +8,31 @@ use crate::users::{UserListAction, UserListState};
 pub fn UserList() -> Html {
   //let users = props.users.clone();
   let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
+  let dispatch = {
+    let users = users.clone();
+    Rc::new(move |act| users.clone().dispatch(act))
+  };
+
   //let on_delete = props.on_delete.clone();
   let on_delete = {
     let users = users.clone();
+    let dispatch = dispatch.clone();
     move |id: String| {
-      let action = UserListAction::Rm(id.clone());
+      let action = UserListAction::Rm(id.clone(), dispatch);
       users.dispatch(action);
     }
   };
+
+  {
+    let users = users.clone();
+    let dispatch = dispatch.clone();
+    use_effect(move || {
+      let action = UserListAction::Fetch(dispatch);
+      users.dispatch(action);
+      || {}
+    });
+  }
+
   html! {
       <div class="mt-4">
         if users.list.is_empty(){
