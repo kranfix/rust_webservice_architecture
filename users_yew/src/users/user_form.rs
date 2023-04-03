@@ -1,12 +1,8 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::user_list::{UserListAction, UserListState};
-
-// #[derive(PartialEq, Properties)]
-// pub struct Props {
-//   pub on_add: Callback<String>,
-// }
+use crate::users::{UserListAction, UserListState};
+use std::rc::Rc;
 
 #[function_component]
 pub fn UserForm() -> Html {
@@ -58,8 +54,13 @@ fn AddUserButton(props: &AddUserButtonProps) -> Html {
   let onclick = {
     let name = props.name.clone();
     let on_added = props.on_added.clone();
+
+    let dispatch = {
+      let users = users.clone();
+      Rc::new(move |act| users.clone().dispatch(act))
+    };
     move |_| {
-      let action = UserListAction::Add(name.clone());
+      let action = UserListAction::Add(name.clone(), dispatch.clone());
       users.clone().dispatch(action);
       on_added.clone().emit(())
     }

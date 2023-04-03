@@ -3,8 +3,10 @@ pub mod user_routes;
 use std::net::SocketAddr;
 
 use axum::Router;
+use tower_http::cors::CorsLayer;
 
 pub async fn run_server(app: Router) {
+  let app = app.layer(CorsLayer::permissive());
   // run our app with hyper
   // `axum::Server` is a re-export of `hyper::Server`
   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

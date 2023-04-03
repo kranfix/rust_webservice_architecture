@@ -1,9 +1,6 @@
-mod user_form;
-mod user_list;
-mod users_provider;
+mod users;
 
-use crate::{user_list::UserList, users_provider::UserListStateProvider};
-use user_form::UserForm;
+use crate::users::{UserForm, UserList, UserListStateProvider};
 use yew::prelude::*;
 
 #[function_component]
