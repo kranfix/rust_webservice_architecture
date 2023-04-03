@@ -4,7 +4,7 @@ use js_sys::JsString;
 use reqwest::header::{ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE};
 use service_client::{Reply, UserReply};
 use web_sys::console;
-use yew::Reducible;
+use yew::{Reducible, UseReducerDispatcher};
 
 #[derive(PartialEq, Clone)]
 pub struct User {
@@ -19,7 +19,7 @@ pub struct UserListState {
 
 pub enum UserListAction<T: Reducible> {
   Add(String, Rc<dyn Fn(<T as Reducible>::Action)>), // name
-  Rm(String, Rc<dyn Fn(<T as Reducible>::Action)>),  // id
+  Rm(String, UseReducerDispatcher<T>),               // id
   Inner(UserListInnerAction),
   Fetch(Rc<dyn Fn(<T as Reducible>::Action)>),
 }
@@ -37,15 +37,6 @@ impl Reducible for UserListState {
     match action {
       UserListAction::Add(name, dispatch) => {
         {
-          /*
-           {
-             data: {
-               id: String,
-               username: String
-             }
-           }
-          */
-          let name = name.clone();
           wasm_bindgen_futures::spawn_local(async move {
             let client = reqwest::Client::new();
             let reqwest = client
@@ -75,9 +66,8 @@ impl Reducible for UserListState {
         }
         self
       }
-      UserListAction::Rm(id, dispatch) => {
+      UserListAction::Rm(id, dispatcher) => {
         {
-          let id = id.clone();
           wasm_bindgen_futures::spawn_local(async move {
             let client = reqwest::Client::new();
             let reqwest = client
@@ -97,7 +87,7 @@ impl Reducible for UserListState {
               Reply::Data(user_reply) => {
                 let id = user_reply.id;
                 let action = UserListAction::Inner(UserListInnerAction::DeleteOne(id));
-                dispatch(action);
+                dispatcher.dispatch(action);
               }
               Reply::Err(e) => console::log_1(&JsString::from(e.as_str())),
             }
