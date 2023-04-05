@@ -2,6 +2,13 @@ use reqwest::header::{ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE};
 
 use crate::{CreateUserPayload, Reply, UserReply};
 
+/// Client
+///
+/// ```
+/// let client = Client::new("http://localhost:3000");
+/// let user_client = client.user();
+/// let users = user_client.fetch_all().await.unwrap();
+/// ```
 pub struct Client {
   pub(crate) server: String,
 }
@@ -28,8 +35,10 @@ impl<T> From<Reply<T>> for Result<T, ClientError> {
 }
 
 impl Client {
-  pub fn new(server: String) -> Self {
-    Self { server }
+  pub fn new(server: impl Into<String>) -> Self {
+    Self {
+      server: server.into(),
+    }
   }
 
   /// Handler for `/users/*`

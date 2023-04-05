@@ -1,8 +1,5 @@
-use std::rc::Rc;
-
 use js_sys::JsString;
-use reqwest::header::{ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE};
-use service_client::{Reply, UserReply};
+use service_client::{client::*, UserReply};
 use web_sys::console;
 use yew::{Reducible, UseReducerDispatcher};
 
@@ -18,10 +15,10 @@ pub struct UserListState {
 }
 
 pub enum UserListAction<T: Reducible> {
-  Add(String, Rc<dyn Fn(<T as Reducible>::Action)>), // name
-  Rm(String, UseReducerDispatcher<T>),               // id
+  Add(String, UseReducerDispatcher<T>), // name
+  Rm(String, UseReducerDispatcher<T>),  // id
   Inner(UserListInnerAction),
-  Fetch(Rc<dyn Fn(<T as Reducible>::Action)>),
+  Fetch(UseReducerDispatcher<T>),
 }
 
 pub enum UserListInnerAction {
@@ -35,32 +32,21 @@ impl Reducible for UserListState {
 
   fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
     match action {
-      UserListAction::Add(name, dispatch) => {
+      UserListAction::Add(name, dispatcher) => {
         {
           wasm_bindgen_futures::spawn_local(async move {
-            let client = reqwest::Client::new();
-            let reqwest = client
-              .post(format!("{}/users", "http://localhost:3000"))
-              .header("Accept", "application/json")
-              .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
-              .header(CONTENT_TYPE, "application/json")
-              //.fetch_mode_no_cors()
-              .body(format!(r#"{{"username":"{name}"}}"#));
-            let resp = reqwest
-              .send()
-              .await
-              .expect("HTTP ERROR")
-              .json::<Reply<UserReply>>()
-              .await
-              .expect("QueryResult parse error");
+            let client = Client::new("http://localhost:3000").user();
+            let resp = client
+              .create_one(&service_client::CreateUserPayload { username: name })
+              .await;
 
             match resp {
-              Reply::Data(user_reply) => {
+              Ok(user_reply) => {
                 let user: User = user_reply.into();
                 let action = UserListAction::Inner(UserListInnerAction::AddOne(user));
-                dispatch(action);
+                dispatcher.dispatch(action);
               }
-              Reply::Err(e) => console::log_1(&JsString::from(e.as_str())),
+              Err(e) => console::log_1(&JsString::from(format!("clientError: {e:?}").as_str())),
             }
           });
         }
@@ -69,56 +55,33 @@ impl Reducible for UserListState {
       UserListAction::Rm(id, dispatcher) => {
         {
           wasm_bindgen_futures::spawn_local(async move {
-            let client = reqwest::Client::new();
-            let reqwest = client
-              .delete(format!("{}/users/{}", "http://localhost:3000", id))
-              .header("Accept", "application/json")
-              .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
-              .header(CONTENT_TYPE, "application/json");
-            let resp = reqwest
-              .send()
-              .await
-              .expect("HTTP ERROR")
-              .json::<Reply<UserReply>>()
-              .await
-              .expect("QueryResult parse error");
-
+            let client = Client::new("http://localhost:3000").user();
+            let resp = client.delete_one(&id).await;
             match resp {
-              Reply::Data(user_reply) => {
+              Ok(user_reply) => {
                 let id = user_reply.id;
                 let action = UserListAction::Inner(UserListInnerAction::DeleteOne(id));
                 dispatcher.dispatch(action);
               }
-              Reply::Err(e) => console::log_1(&JsString::from(e.as_str())),
+              Err(e) => console::log_1(&JsString::from(format!("clientError: {e:?}").as_str())),
             }
           });
         }
         self
       }
-      UserListAction::Fetch(dispatch) => {
+      UserListAction::Fetch(dispatcher) => {
         {
           wasm_bindgen_futures::spawn_local(async move {
-            let client = reqwest::Client::new();
-            let reqwest = client
-              .get(format!("{}/users", "http://localhost:3000"))
-              .header("Accept", "application/json")
-              .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
-              .header(CONTENT_TYPE, "application/json");
-            let resp = reqwest
-              .send()
-              .await
-              .expect("HTTP ERROR")
-              .json::<Reply<Vec<UserReply>>>()
-              .await
-              .expect("QueryResult parse error");
+            let client = Client::new("http://localhost:3000").user();
+            let resp = client.fetch_all().await;
 
             match resp {
-              Reply::Data(users) => {
+              Ok(users) => {
                 let users: Vec<User> = users.into_iter().map(|u| u.into()).collect();
                 let action = UserListAction::Inner(UserListInnerAction::SetAll(users));
-                dispatch(action);
+                dispatcher.dispatch(action);
               }
-              Reply::Err(e) => console::log_1(&JsString::from(e.as_str())),
+              Err(e) => console::log_1(&JsString::from(format!("clientError: {e:?}").as_str())),
             }
           });
         }
