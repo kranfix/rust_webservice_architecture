@@ -16,16 +16,15 @@ pub fn UserList() -> Html {
   //let on_delete = props.on_delete.clone();
   let on_delete = {
     let users = users.clone();
-    let dispatch = dispatch.clone();
+    let dispatch = users.dispatcher();
     move |id: String| {
-      let action = UserListAction::Rm(id.clone(), dispatch);
+      let action = UserListAction::Rm(id, dispatch);
       users.dispatch(action);
     }
   };
 
   {
     let users = users.clone();
-    let dispatch = dispatch.clone();
     use_effect(move || {
       let action = UserListAction::Fetch(dispatch);
       users.dispatch(action);
