@@ -1,18 +1,20 @@
 mod users;
 
-use crate::users::{UserForm, UserList, UserListStateProvider};
+use crate::users::{ClientStateProvider, UserForm, UserList, UserListStateProvider};
 use yew::prelude::*;
 
 #[function_component]
 fn App() -> Html {
   html! {
-      <div class="container">
-          <h1> { "Usuarios" } </h1>
-          <UserListStateProvider>
-            <UserForm />
-            <UserList />
-          </UserListStateProvider>
-      </div>
+      <ClientStateProvider>
+        <div class="container">
+            <h1> { "Usuarios" } </h1>
+            <UserListStateProvider>
+              <UserForm />
+              <UserList />
+            </UserListStateProvider>
+        </div>
+      </ClientStateProvider>
   }
 }
 

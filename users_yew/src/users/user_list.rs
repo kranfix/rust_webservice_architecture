@@ -1,29 +1,22 @@
 use yew::prelude::*;
 
-use crate::users::{UserListAction, UserListState};
+use crate::users::UserController;
 
 #[function_component]
 pub fn UserList() -> Html {
   //let users = props.users.clone();
-  let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
-  let dispatcher = users.dispatcher();
+  let users = use_context::<UserController>().unwrap();
 
   //let on_delete = props.on_delete.clone();
   let on_delete = {
     let users = users.clone();
-    let dispatcher = dispatcher.clone();
-    move |id: String| {
-      let action = UserListAction::Rm(id, dispatcher);
-      users.dispatch(action);
-    }
+    move |id: String| users.rm(id)
   };
 
   {
     let users = users.clone();
-    let dispatcher = dispatcher.clone();
     use_effect(move || {
-      let action = UserListAction::Fetch(dispatcher);
-      users.dispatch(action);
+      users.fetch_all();
       || {}
     });
   }
