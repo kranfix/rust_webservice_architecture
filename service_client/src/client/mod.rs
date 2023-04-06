@@ -9,6 +9,7 @@ use crate::{CreateUserPayload, Reply, UserReply};
 /// let user_client = client.user();
 /// let users = user_client.fetch_all().await.unwrap();
 /// ```
+#[derive(Debug, Clone, PartialEq)]
 pub struct Client {
   pub(crate) server: String,
 }
@@ -47,6 +48,7 @@ impl Client {
   }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct UserClient {
   url: String,
 }

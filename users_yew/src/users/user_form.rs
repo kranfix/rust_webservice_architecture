@@ -1,7 +1,7 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::users::{UserListAction, UserListState};
+use crate::users::UserController;
 
 #[function_component]
 pub fn UserForm() -> Html {
@@ -40,6 +40,7 @@ pub fn UserForm() -> Html {
     </>
   }
 }
+
 #[derive(PartialEq, Properties)]
 pub struct AddUserButtonProps {
   name: String,
@@ -48,16 +49,14 @@ pub struct AddUserButtonProps {
 
 #[function_component]
 fn AddUserButton(props: &AddUserButtonProps) -> Html {
-  let users = use_context::<UseReducerHandle<UserListState>>().unwrap();
+  let users = use_context::<UserController>().unwrap();
 
   let onclick = {
     let name = props.name.clone();
     let on_added = props.on_added.clone();
 
-    let dispatch = users.dispatcher();
     move |_| {
-      let action = UserListAction::Add(name.clone(), dispatch.clone());
-      users.clone().dispatch(action);
+      users.clone().add(name.clone());
       on_added.clone().emit(())
     }
   };
