@@ -3,7 +3,9 @@ pub mod query_result;
 
 pub use client::SurrealReqwest;
 pub use client::*;
-use domain::{async_trait, CreateUserError, DeleteUserError, GetUsersByIdError, GetUsersError};
+use domain::{
+  async_trait, CreateUserError, DeleteUserError, GetUsersByIdError, GetUsersError, UpdateUserError,
+};
 use query_result::QueryResult;
 use serde::Deserialize;
 
@@ -91,5 +93,22 @@ impl domain::UserRepo for SurrealReqwest {
     };
 
     Ok(deleted_user.ok_or(DeleteUserError::UserNotFound(id))?)
+  }
+
+  async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError> {
+    let update_result = self
+      .sql::<Person>(format!(r#"DELETE person:{id} RETURN before"#))
+      .await
+      .map_err(|_| UpdateUserError::Internal)?
+      .into_iter()
+      .next()
+      .ok_or(UpdateUserError::Internal)?;
+
+    let updated_user = match update_result {
+      QueryResult::OK { result, .. } => result.into_iter().next(),
+      QueryResult::ERR { .. } => return Err(UpdateUserError::Internal),
+    };
+
+    Ok(updated_user.ok_or(UpdateUserError::UserNotFound(id))?)
   }
 }
