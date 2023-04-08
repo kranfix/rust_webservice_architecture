@@ -36,7 +36,7 @@ pub enum GetUsersError {
 
 #[derive(Error, Debug)]
 pub enum GetUsersByIdError {
-  #[error("User with id={0} not found")]
+  #[error(r#"User with id="{0}" not found"#)]
   NotFound(String),
   #[error("Internal error :(")]
   Internal,
@@ -44,7 +44,7 @@ pub enum GetUsersByIdError {
 
 #[derive(Error, Debug)]
 pub enum DeleteUserError {
-  #[error(r#"User with id="{0}""#)]
+  #[error(r#"User with id="{0}" not found"#)]
   UserNotFound(String),
   #[error("Internal error :(")]
   Internal,
@@ -52,7 +52,7 @@ pub enum DeleteUserError {
 
 #[derive(Error, Debug)]
 pub enum UpdateUserError {
-  #[error(r#"User with id="{0}""#)]
+  #[error(r#"User with id="{0}" not found"#)]
   UserNotFound(String),
   #[error("Internal error :(")]
   Internal,

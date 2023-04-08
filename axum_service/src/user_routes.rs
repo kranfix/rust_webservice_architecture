@@ -2,7 +2,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use domain::UserRepo;
-use service_client::{CreateUserPayload, Reply, UserReply};
+use service_client::{CreateUserPayload, Reply, UpdateUserPayload, UserReply};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -111,7 +111,7 @@ pub async fn delete_user<UR: UserRepo>(
 pub async fn update_user<UR: UserRepo>(
   State(user_repo): State<Arc<Mutex<UR>>>,
   Path(id): Path<String>,
-  Json(payload): Json<CreateUserPayload>,
+  Json(payload): Json<UpdateUserPayload>,
 ) -> impl IntoResponse {
   let res = {
     let mut user_repo = user_repo.lock().await;
