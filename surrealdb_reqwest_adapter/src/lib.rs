@@ -96,8 +96,9 @@ impl domain::UserRepo for SurrealReqwest {
   }
 
   async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError> {
+    // TODO: check if the user does not exist and throw the UpdateUserError:UserNotFound
     let update_result = self
-      .sql::<Person>(format!(r#"DELETE person:{id} RETURN before"#))
+      .sql::<Person>(format!(r#"UPDATE person:{id} SET name="{name}""#))
       .await
       .map_err(|_| UpdateUserError::Internal)?
       .into_iter()

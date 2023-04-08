@@ -21,3 +21,8 @@ impl<U: domain::User> From<U> for UserReply {
 pub struct CreateUserPayload {
   pub username: String,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UpdateUserPayload {
+  pub username: String,
+}
