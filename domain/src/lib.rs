@@ -10,6 +10,7 @@ pub trait UserRepo {
   async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError>;
   async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError>;
   async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError>;
+  async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError>;
 }
 
 pub trait User: Clone {
@@ -35,7 +36,7 @@ pub enum GetUsersError {
 
 #[derive(Error, Debug)]
 pub enum GetUsersByIdError {
-  #[error("User with id={0} not found")]
+  #[error(r#"User with id="{0}" not found"#)]
   NotFound(String),
   #[error("Internal error :(")]
   Internal,
@@ -43,7 +44,15 @@ pub enum GetUsersByIdError {
 
 #[derive(Error, Debug)]
 pub enum DeleteUserError {
-  #[error(r#"User with id="{0}""#)]
+  #[error(r#"User with id="{0}" not found"#)]
+  UserNotFound(String),
+  #[error("Internal error :(")]
+  Internal,
+}
+
+#[derive(Error, Debug)]
+pub enum UpdateUserError {
+  #[error(r#"User with id="{0}" not found"#)]
   UserNotFound(String),
   #[error("Internal error :(")]
   Internal,

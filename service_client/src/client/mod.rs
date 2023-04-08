@@ -1,6 +1,6 @@
 use reqwest::header::{ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE};
 
-use crate::{CreateUserPayload, Reply, UserReply};
+use crate::{CreateUserPayload, Reply, UpdateUserPayload, UserReply};
 
 /// Client
 ///
@@ -99,6 +99,27 @@ impl UserClient {
       .header("Accept", "application/json")
       .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
       .header(CONTENT_TYPE, "application/json");
+    let resp = reqwest //
+      .send()
+      .await?
+      .json::<Reply<UserReply>>()
+      .await?;
+    resp.into()
+  }
+
+  pub async fn update_one(
+    &self,
+    id: &str,
+    payload: &UpdateUserPayload,
+  ) -> Result<UserReply, ClientError> {
+    let body = serde_json::to_string(payload).unwrap();
+    let client = reqwest::Client::new();
+    let reqwest = client
+      .put(format!("{}/{}", self.url, id))
+      .header("Accept", "application/json")
+      .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
+      .header(CONTENT_TYPE, "application/json")
+      .body(body);
     let resp = reqwest //
       .send()
       .await?

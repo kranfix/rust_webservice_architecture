@@ -2,7 +2,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use domain::UserRepo;
-use service_client::{CreateUserPayload, Reply, UserReply};
+use service_client::{CreateUserPayload, Reply, UpdateUserPayload, UserReply};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -11,10 +11,15 @@ macro_rules! create_user_routes {
   ($user_repo:expr) => {{
     use axum::routing::get;
     use axum::Router;
-    use axum_service::user_routes::{create_user, delete_user, get_user_by_id, get_users};
+    use axum_service::user_routes::{
+      create_user, delete_user, get_user_by_id, get_users, update_user,
+    };
     Router::new()
       .route("/", get(get_users).post(create_user))
-      .route("/:id", get(get_user_by_id).delete(delete_user))
+      .route(
+        "/:id",
+        get(get_user_by_id).delete(delete_user).put(update_user),
+      )
       .with_state($user_repo)
   }};
 }
@@ -99,6 +104,27 @@ pub async fn delete_user<UR: UserRepo>(
   let status_code = match &err {
     domain::DeleteUserError::UserNotFound(_) => StatusCode::NOT_FOUND,
     domain::DeleteUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+  };
+  (status_code, Json(Reply::Err(err.to_string())))
+}
+
+pub async fn update_user<UR: UserRepo>(
+  State(user_repo): State<Arc<Mutex<UR>>>,
+  Path(id): Path<String>,
+  Json(payload): Json<UpdateUserPayload>,
+) -> impl IntoResponse {
+  let res = {
+    let mut user_repo = user_repo.lock().await;
+    user_repo.update_user(id, payload.username).await
+  };
+  let err = match res {
+    Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
+    Err(e) => e,
+  };
+
+  let status_code = match &err {
+    domain::UpdateUserError::UserNotFound(_) => StatusCode::NOT_FOUND,
+    domain::UpdateUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
   };
   (status_code, Json(Reply::Err(err.to_string())))
 }
