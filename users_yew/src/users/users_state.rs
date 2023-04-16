@@ -20,6 +20,7 @@ pub enum UserListAction {
   AddOne(User),
   DeleteOne(String),
   SetAll(Vec<User>),
+  UpdateOne { id: String, name: String },
 }
 
 #[derive(Clone, PartialEq)]
@@ -92,6 +93,29 @@ impl UserController {
       }
     });
   }
+
+  pub fn update(&self, id: String, name: String) {
+    let client = self.client.clone();
+    let dispatcher = self.state.dispatcher();
+    wasm_bindgen_futures::spawn_local(async move {
+      let resp = client
+        .update_one(
+          &id,
+          &service_client::UpdateUserPayload {
+            username: name.clone(),
+          },
+        )
+        .await;
+      match resp {
+        Ok(user_reply) => {
+          let id = user_reply.id;
+          let action = UserListAction::UpdateOne { id, name };
+          dispatcher.dispatch(action);
+        }
+        Err(e) => console::log_1(&JsString::from(format!("clientError: {e:?}").as_str())),
+      }
+    });
+  }
 }
 
 impl Reducible for UserListState {
@@ -109,6 +133,20 @@ impl Reducible for UserListState {
         Self { list }.into()
       }
       UserListAction::SetAll(list) => Self { list }.into(),
+      UserListAction::UpdateOne { id, name } => {
+        let mut list = Vec::new();
+        for u in &self.list {
+          if u.id == id {
+            list.push(User {
+              id: id.clone(),
+              name: name.clone(),
+            });
+          } else {
+            list.push(u.clone());
+          }
+        }
+        Self { list }.into()
+      }
     }
   }
 }

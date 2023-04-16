@@ -1,4 +1,4 @@
-use crate::users::{User, UserController};
+use crate::users::{User, UserController, UserEditForm};
 use web_sys::*;
 use yew::prelude::*;
 
@@ -23,6 +23,19 @@ pub fn UserList() -> Html {
           Ok(_) => user_to_edit.set(Some(user)),
           Err(_) => user_to_edit.set(None),
         }
+      }
+    }
+  };
+
+  let close_user_edit_dialog = {
+    let user_to_edit = user_to_edit.clone();
+    let dialog_ref = dialog_ref.clone();
+    move |_| {
+      user_to_edit.set(None);
+      let modal = dialog_ref.cast::<HtmlDialogElement>();
+
+      if let Some(modal) = modal {
+        modal.close();
       }
     }
   };
@@ -79,8 +92,9 @@ pub fn UserList() -> Html {
         }
         <dialog ref={dialog_ref}>
           if let Some(user) = user_to_edit.as_ref().cloned() {
-            <UserEditCard {user}/>
+            <UserEditCard {user} on_edited={close_user_edit_dialog}/>
           }
+          //<button onclick={close_user_edit_dialog} type="button" class="btn btn-outline-secondary" style="margin-left:0.5rem">{ "X" }</button>
         </dialog>
       </div>
   }
@@ -89,15 +103,18 @@ pub fn UserList() -> Html {
 #[derive(Properties, PartialEq)]
 pub struct Props {
   pub user: User,
+  on_edited: Callback<()>,
 }
 
 #[function_component]
 fn UserEditCard(props: &Props) -> Html {
   let user = props.user.clone();
+  let close_dialog = props.on_edited.clone();
   html! {
     <div>
-      <h2>{"Hola soy un dialog"}</h2>
-      <span>{user.name}</span>
+      <h2>{"Edit user"}</h2>
+      <span>{user.name.clone()}</span>
+      <UserEditForm user={user.clone()} on_edited={close_dialog}/>
     </div>
   }
 }
