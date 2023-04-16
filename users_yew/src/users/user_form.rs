@@ -31,7 +31,7 @@ pub fn UserForm() -> Html {
     <>
       <form>
         <div class="mb-3">
-          <input ref={input_node_ref} type="text" {oninput} value={name.clone()} class="form-control" aria-describedby="emailHelp"/>
+          <input ref={input_node_ref} type="text" {oninput} value={name.clone()} class="form-control"/>
           <div id="emailHelp" class="form-text">{"Name"}</div>
         </div>
       </form>
