@@ -76,7 +76,7 @@ pub async fn create_user(user_client: UserClient, name: String) -> Result<()> {
     .await;
   match reply {
     Ok(user) => {
-      println!("Create: {user:?}");
+      println!("Created: {user:?}");
     }
     Err(e) => {
       println!("{e:?}");
@@ -88,8 +88,8 @@ pub async fn create_user(user_client: UserClient, name: String) -> Result<()> {
 pub async fn get_users(user_client: UserClient) -> Result<()> {
   let reply = user_client.fetch_all().await;
   match reply {
-    Ok(user) => {
-      println!("Create: {user:?}");
+    Ok(users) => {
+      println!("Found: {users:?}");
     }
     Err(e) => {
       println!("{e:?}");
