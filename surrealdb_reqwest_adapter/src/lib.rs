@@ -80,7 +80,7 @@ impl domain::UserRepo for SurrealReqwest {
 
   async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError> {
     let delete_result = self
-      .sql::<Person>(format!(r#"DELETE person:{id} RETURN before"#))
+      .sql::<Option<Person>>(format!(r#"DELETE person:{id} RETURN before"#))
       .await
       .map_err(|_| DeleteUserError::Internal)?
       .into_iter()
@@ -88,11 +88,16 @@ impl domain::UserRepo for SurrealReqwest {
       .ok_or(DeleteUserError::Internal)?;
 
     let deleted_user = match delete_result {
-      QueryResult::OK { result, .. } => result.into_iter().next(),
+      QueryResult::OK { result, .. } => result
+        .into_iter()
+        .next()
+        .ok_or(DeleteUserError::UserNotFound(id.clone()))?,
       QueryResult::ERR { .. } => return Err(DeleteUserError::Internal),
     };
-
-    Ok(deleted_user.ok_or(DeleteUserError::UserNotFound(id))?)
+    match deleted_user {
+      Some(u) => Ok(u),
+      None => Err(DeleteUserError::UserNotFound(id)),
+    }
   }
 
   async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError> {

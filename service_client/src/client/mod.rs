@@ -92,6 +92,21 @@ impl UserClient {
     resp.into()
   }
 
+  pub async fn fetch_one(&self, id: &str) -> Result<UserReply, ClientError> {
+    let client = reqwest::Client::new();
+    let reqwest = client
+      .get(format!("{}/{}", self.url, id))
+      .header("Accept", "application/json")
+      .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
+      .header(CONTENT_TYPE, "application/json");
+    let resp = reqwest //
+      .send()
+      .await?
+      .json::<Reply<UserReply>>()
+      .await?;
+    resp.into()
+  }
+
   pub async fn delete_one(&self, id: &str) -> Result<UserReply, ClientError> {
     let client = reqwest::Client::new();
     let reqwest = client
