@@ -1,6 +1,6 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::{Parser, Subcommand};
-use domain::UserRepo;
+use service_client::client::*;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -27,13 +27,19 @@ enum UserCommand {
     #[arg(short, long)]
     email: String,
   },
+  Update {
+    #[arg(short, long)]
+    id: String,
+    #[arg(short, long)]
+    name: String,
+  },
   Rm {
     #[arg(short, long)]
     id: String,
   },
 }
 
-pub async fn run_cli<UR: UserRepo>(user_repo: UR) -> Result<()> {
+pub async fn run_cli(user_client: UserClient) -> Result<()> {
   let cli = Cli::parse();
 
   // You can see how many times a particular flag or argument occurred
@@ -55,56 +61,80 @@ pub async fn run_cli<UR: UserRepo>(user_repo: UR) -> Result<()> {
   };
 
   match cmd {
-    UserCommand::List => get_users(user_repo).await?,
-    UserCommand::Get { id } => get_user_by_id(user_repo, id).await?,
-    UserCommand::Create { name, .. } => create_user(user_repo, name).await?,
-    UserCommand::Rm { id } => delete_user(user_repo, id).await?,
+    UserCommand::List => get_users(user_client).await?,
+    UserCommand::Get { id } => get_user_by_id(user_client, id).await?,
+    UserCommand::Create { name, .. } => create_user(user_client, name).await?,
+    UserCommand::Update { id, name } => update_user(user_client, id, name).await?,
+    UserCommand::Rm { id } => delete_user(user_client, id).await?,
   }
   Ok(())
 }
 
-pub async fn create_user<UR: UserRepo>(mut user_repo: UR, name: String) -> Result<()> {
-  let user: UserReply = user_repo.create_user(name).await?.into();
-  println!("{user:?}");
-  Ok(())
-}
-
-pub async fn get_users<UR: UserRepo>(user_repo: UR) -> Result<()> {
-  let users: Vec<UserReply> = user_repo
-    .get_users()
-    .await
-    .context("context")?
-    .into_iter()
-    .map(|u| u.into())
-    .collect();
-  println!("Found: {users:?}");
-  Ok(())
-}
-
-pub async fn get_user_by_id<UR: UserRepo>(user_repo: UR, id: String) -> Result<()> {
-  let user: UserReply = user_repo.get_user_by_id(id).await?.into();
-  println!("Found: {user:?}");
-  Ok(())
-}
-
-pub async fn delete_user<UR: UserRepo>(mut user_repo: UR, id: String) -> Result<()> {
-  let user: UserReply = user_repo.delete_user(id).await?.into();
-  println!("Deleted: {user:?}");
-  Ok(())
-}
-
-// the output to our `create_user` handler
-#[derive(Clone, Debug)]
-pub struct UserReply {
-  pub id: String,
-  pub username: String,
-}
-
-impl<U: domain::User> From<U> for UserReply {
-  fn from(value: U) -> Self {
-    UserReply {
-      id: value.id(),
-      username: value.name(),
+pub async fn create_user(user_client: UserClient, name: String) -> Result<()> {
+  let reply = user_client
+    .create_one(&service_client::CreateUserPayload { username: name })
+    .await;
+  match reply {
+    Ok(user) => {
+      println!("Created: {user:?}");
+    }
+    Err(e) => {
+      println!("{e:?}");
     }
   }
+  Ok(())
+}
+
+pub async fn get_users(user_client: UserClient) -> Result<()> {
+  let reply = user_client.fetch_all().await;
+  match reply {
+    Ok(users) => {
+      println!("Found: {users:?}");
+    }
+    Err(e) => {
+      println!("{e:?}");
+    }
+  }
+  Ok(())
+}
+
+pub async fn get_user_by_id(user_client: UserClient, id: String) -> Result<()> {
+  let reply = user_client.fetch_one(&id).await;
+  match reply {
+    Ok(user) => {
+      println!("Found: {user:?}");
+    }
+    Err(e) => {
+      println!("{e:?}");
+    }
+  }
+  Ok(())
+}
+
+pub async fn update_user(user_client: UserClient, id: String, name: String) -> Result<()> {
+  let reply = user_client
+    .update_one(&id, &service_client::UpdateUserPayload { username: name })
+    .await;
+  match reply {
+    Ok(user) => {
+      println!("Updated: {user:?}");
+    }
+    Err(e) => {
+      println!("{e:?}");
+    }
+  }
+  Ok(())
+}
+
+pub async fn delete_user(user_client: UserClient, id: String) -> Result<()> {
+  let reply = user_client.delete_one(&id).await;
+  match reply {
+    Ok(user) => {
+      println!("Deleted: {user:?}");
+    }
+    Err(e) => {
+      println!("{e:?}");
+    }
+  }
+  Ok(())
 }

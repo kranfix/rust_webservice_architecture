@@ -1,10 +1,10 @@
 use anyhow::Result;
 use cli_ent::run_cli;
-use surrealdb_reqwest_adapter::{Auth, SurrealReqwest};
+use service_client::client::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  let auth = Auth::new("my_user", "my_pass");
-  let surreal_client = SurrealReqwest::new("my_ns", "my_db", "http://localhost:8000", auth);
-  run_cli(surreal_client).await
+  let client = Client::new("http://localhost:3000");
+  let user_client = client.user();
+  run_cli(user_client).await
 }
