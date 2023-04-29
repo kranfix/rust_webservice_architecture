@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 domain = {path="../domain"}
+tokio = "1.28.0"
