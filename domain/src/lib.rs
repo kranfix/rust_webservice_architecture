@@ -6,11 +6,11 @@ use thiserror::Error;
 pub trait UserRepo {
   type User: User;
 
-  async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError>;
+  async fn create_user(&self, name: String) -> Result<Self::User, CreateUserError>;
   async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError>;
   async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError>;
-  async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError>;
-  async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError>;
+  async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError>;
+  async fn update_user(&self, id: String, name: String) -> Result<Self::User, UpdateUserError>;
 }
 
 pub trait User: Clone {

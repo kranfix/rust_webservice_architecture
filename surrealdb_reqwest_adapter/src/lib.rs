@@ -28,7 +28,7 @@ impl domain::User for Person {
 impl domain::UserRepo for SurrealReqwest {
   type User = Person;
 
-  async fn create_user(&mut self, name: String) -> Result<Self::User, CreateUserError> {
+  async fn create_user(&self, name: String) -> Result<Self::User, CreateUserError> {
     if name.trim().is_empty() {
       return Err(CreateUserError::NameBadFormatted);
     }
@@ -78,7 +78,7 @@ impl domain::UserRepo for SurrealReqwest {
     Ok(person.ok_or(GetUsersByIdError::NotFound(id))?)
   }
 
-  async fn delete_user(&mut self, id: String) -> Result<Self::User, DeleteUserError> {
+  async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
     let delete_result = self
       .sql::<Option<Person>>(format!(r#"DELETE person:{id} RETURN before"#))
       .await
@@ -100,7 +100,7 @@ impl domain::UserRepo for SurrealReqwest {
     }
   }
 
-  async fn update_user(&mut self, id: String, name: String) -> Result<Self::User, UpdateUserError> {
+  async fn update_user(&self, id: String, name: String) -> Result<Self::User, UpdateUserError> {
     let query = format!(r#"UPDATE person SET name="{name}" WHERE id="person:{id}""#);
     let update_result = self
       .sql::<Person>(query)
