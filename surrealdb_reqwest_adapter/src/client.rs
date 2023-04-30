@@ -27,7 +27,7 @@ impl SurrealReqwest {
   pub async fn sql<T: DeserializeOwned>(
     &self,
     sql: impl Into<String>,
-  ) -> Result<Vec<QueryResult<T>>, ()> {
+  ) -> Result<Vec<QueryResult<T>>, String> {
     let client = reqwest::Client::new();
     let reqwest = client
       .post(format!("{}/sql", self.addr))
@@ -36,14 +36,13 @@ impl SurrealReqwest {
       .header("DB", self.db.clone())
       .header("Accept", "application/json")
       .body(sql.into());
-    let resp = reqwest
+    reqwest
       .send()
       .await
-      .expect("HTTP ERROR")
+      .map_err(|e| format!("HTTP ERROR: {e:?}"))?
       .json::<Vec<QueryResult<T>>>()
       .await
-      .expect("QueryResult parse error");
-    Ok(resp)
+      .map_err(|e| format!("QueryResult parse error: {e:?}"))
   }
 }
 

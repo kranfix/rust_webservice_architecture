@@ -35,16 +35,31 @@ impl domain::UserRepo for SurrealReqwest {
     let query_results = self
       .sql::<Person>(format!(r#"CREATE person SET name="{name}""#))
       .await
-      .map_err(|_| CreateUserError::Internal)?;
-    let create_result = query_results
-      .into_iter()
-      .next()
-      .ok_or(CreateUserError::Internal)?;
+      .map_err(|error| {
+        log::error!("UserRepo::create_user: {:?}", error);
+        CreateUserError::Internal
+      })?;
+    let create_result = query_results.into_iter().next().ok_or_else(|| {
+      log::error!("UserRepo::create_user: response does not include any result");
+      CreateUserError::Internal
+    })?;
     match create_result {
-      QueryResult::OK { result, .. } => {
-        Ok(result.into_iter().next().ok_or(CreateUserError::Internal)?)
+      QueryResult::ERR { detail, time } => {
+        log::error!(
+          "UserRepo::create_user: [{},{}] result could not be formatted",
+          time,
+          detail
+        );
+        return Err(CreateUserError::Internal);
       }
-      QueryResult::ERR { .. } => return Err(CreateUserError::Internal),
+      QueryResult::OK { result, .. } => match result.into_iter().next() {
+        Some(created_user) => Ok(created_user),
+        None => {
+          let e = CreateUserError::Internal;
+          log::error!("UserRepo::create_user: {}", e);
+          Err(e)
+        }
+      },
     }
   }
 
@@ -52,14 +67,27 @@ impl domain::UserRepo for SurrealReqwest {
     let select_result = self
       .sql::<Person>("SELECT * FROM person")
       .await
-      .map_err(|_| GetUsersError::Internal)?
+      .map_err(|error| {
+        log::error!("UserRepo::get_users: {:?}", error);
+        GetUsersError::Internal
+      })?
       .into_iter()
       .next()
-      .ok_or(GetUsersError::Internal)?;
+      .ok_or_else(|| {
+        log::error!("UserRepo::get_users: Result count is not as expected");
+        GetUsersError::Internal
+      })?;
 
     match select_result {
+      QueryResult::ERR { detail, time } => {
+        log::error!(
+          "UserRepo::get_users: [{}, {}] result could not be formatted",
+          time,
+          detail
+        );
+        Err(GetUsersError::Internal)
+      }
       QueryResult::OK { result, .. } => Ok(result),
-      QueryResult::ERR { .. } => Err(GetUsersError::Internal),
     }
   }
 
@@ -67,36 +95,73 @@ impl domain::UserRepo for SurrealReqwest {
     let select_result = self
       .sql::<Person>(format!(r#"SELECT * FROM person:{id}"#))
       .await
-      .map_err(|_| GetUsersByIdError::Internal)?
+      .map_err(|error| {
+        log::error!("UserRepo::get_user_by_id: {:?}", error);
+        GetUsersByIdError::Internal
+      })?
       .into_iter()
       .next()
-      .ok_or(GetUsersByIdError::Internal)?;
+      .ok_or_else(|| {
+        log::error!("UserRepo::get_user_by_id: response does not include any result");
+        GetUsersByIdError::Internal
+      })?;
     let person = match select_result {
       QueryResult::OK { result, .. } => result.into_iter().next(),
-      QueryResult::ERR { .. } => return Err(GetUsersByIdError::Internal),
+      QueryResult::ERR { detail, time } => {
+        log::error!(
+          "UserRepo::get_user_by_id: [{}, {}] result could not be formatted",
+          time,
+          detail
+        );
+        return Err(GetUsersByIdError::Internal);
+      }
     };
-    Ok(person.ok_or(GetUsersByIdError::NotFound(id))?)
+    match person {
+      None => {
+        let e = GetUsersByIdError::NotFound(id);
+        log::error!("UserRepo::get_user_by_id: {}", e);
+        Err(e)
+      }
+      Some(person) => Ok(person),
+    }
   }
 
   async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
     let delete_result = self
       .sql::<Option<Person>>(format!(r#"DELETE person:{id} RETURN before"#))
       .await
-      .map_err(|_| DeleteUserError::Internal)?
+      .map_err(|error| {
+        log::error!("UserRepo::delete_user: {:?}", error);
+        DeleteUserError::Internal
+      })?
       .into_iter()
       .next()
-      .ok_or(DeleteUserError::Internal)?;
+      .ok_or_else(|| {
+        log::error!("UserRepo::delete_user: response does not include any result");
+        DeleteUserError::Internal
+      })?;
 
     let deleted_user = match delete_result {
-      QueryResult::OK { result, .. } => result
-        .into_iter()
-        .next()
-        .ok_or(DeleteUserError::UserNotFound(id.clone()))?,
-      QueryResult::ERR { .. } => return Err(DeleteUserError::Internal),
+      QueryResult::ERR { detail, time } => {
+        log::error!(
+          "UserRepo::delete_user: [{}, {}] result could not be formatted",
+          time,
+          detail
+        );
+        return Err(DeleteUserError::Internal);
+      }
+      QueryResult::OK { result, .. } => result.into_iter().next().ok_or_else(|| {
+        log::error!("UserRepo::delete_user: user info was expected");
+        DeleteUserError::UserNotFound(id.clone())
+      })?,
     };
     match deleted_user {
+      None => {
+        let e = DeleteUserError::UserNotFound(id);
+        log::error!("UserRepo::delete_user: {}", e);
+        Err(e)
+      }
       Some(u) => Ok(u),
-      None => Err(DeleteUserError::UserNotFound(id)),
     }
   }
 
@@ -105,16 +170,36 @@ impl domain::UserRepo for SurrealReqwest {
     let update_result = self
       .sql::<Person>(query)
       .await
-      .map_err(|_| UpdateUserError::Internal)?
+      .map_err(|error| {
+        log::error!("UserRepo::update_user: {:?}", error);
+        UpdateUserError::Internal
+      })?
       .into_iter()
       .next()
-      .ok_or(UpdateUserError::Internal)?;
+      .ok_or_else(|| {
+        log::error!("UserRepo::update_user: response does not include any result");
+        UpdateUserError::Internal
+      })?;
 
     let updated_user = match update_result {
+      QueryResult::ERR { detail, time } => {
+        log::error!(
+          "{} UserRepo::update_user: result could not be formatted {}",
+          time,
+          detail
+        );
+        return Err(UpdateUserError::Internal);
+      }
       QueryResult::OK { result, .. } => result.into_iter().next(),
-      QueryResult::ERR { .. } => return Err(UpdateUserError::Internal),
     };
 
-    Ok(updated_user.ok_or(UpdateUserError::UserNotFound(id))?)
+    match updated_user {
+      None => {
+        let e = UpdateUserError::UserNotFound(id);
+        log::error!("UserRepo::update_user: {}", e);
+        Err(e)
+      }
+      Some(updated_user) => Ok(updated_user),
+    }
   }
 }
