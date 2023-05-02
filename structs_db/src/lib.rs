@@ -1,68 +1,13 @@
+pub mod collections;
+pub mod core;
+
 use domain::{
   async_trait, CreateUserError, DeleteUserError, GetUsersByIdError, GetUsersError, UpdateUserError,
   UserRepo,
 };
-use std::collections::HashMap;
 use tokio::sync::Mutex;
 
-#[derive(Default)]
-pub struct UserDB(Mutex<InnerUserDB>);
-
-#[derive(Default)]
-struct InnerUserDB {
-  len: usize,
-  data: HashMap<String, User>,
-}
-
-impl InnerUserDB {
-  fn create_user(&mut self, name: String) -> Result<User, CreateUserError> {
-    let user = User {
-      id: (self.len as u64 + 1).to_string(),
-      nick: name,
-    };
-    self.data.insert(user.id.clone(), user.clone());
-    self.len += 1;
-
-    Ok(user)
-  }
-
-  fn get_users(&self) -> Result<Vec<User>, GetUsersError> {
-    Ok(self.data.values().cloned().collect())
-  }
-
-  fn get_user_by_id(&self, id: String) -> Result<User, GetUsersByIdError> {
-    self
-      .data
-      .get(&id)
-      .cloned()
-      .ok_or(GetUsersByIdError::NotFound(id))
-  }
-
-  fn delete_user(&mut self, id: String) -> Result<User, DeleteUserError> {
-    let deleted_user = self
-      .data
-      .remove(&id)
-      .ok_or(DeleteUserError::UserNotFound(id))?;
-    Ok(deleted_user)
-  }
-
-  fn update_user(&mut self, id: String, name: String) -> Result<User, UpdateUserError> {
-    let mut user = self
-      .data
-      .get_mut(&id)
-      .ok_or(UpdateUserError::UserNotFound(id))?;
-    user.nick = name;
-    Ok(user.clone())
-  }
-}
-
-#[derive(Clone)]
-pub struct User {
-  pub id: String,
-  pub nick: String,
-}
-
-impl domain::User for User {
+impl domain::User for collections::User {
   fn id(&self) -> String {
     self.id.clone()
   }
@@ -72,46 +17,62 @@ impl domain::User for User {
   }
 }
 
+#[derive(Default)]
+pub struct UserDB(Mutex<collections::UserCollection>);
+
 #[async_trait]
 impl UserRepo for UserDB {
-  type User = User;
+  type User = collections::User;
 
   async fn create_user(&self, name: String) -> Result<Self::User, CreateUserError> {
+    let name = name.trim();
+    if name.is_empty() {
+      return Err(CreateUserError::NameBadFormatted);
+    }
     let user = {
-      let mut this = self.0.lock().await;
-      this.create_user(name)?
+      let mut col = self.0.lock().await;
+      col.create(|id| collections::User {
+        id,
+        nick: name.to_string(),
+      })
     };
-    Ok(user)
+    user.ok_or(CreateUserError::Internal)
   }
 
   async fn get_users(&self) -> Result<Vec<Self::User>, GetUsersError> {
     let users = {
-      let this = self.0.lock().await;
-      this.get_users()?
+      let col = self.0.lock().await;
+      col.get_all()
     };
     Ok(users)
   }
 
   async fn get_user_by_id(&self, id: String) -> Result<Self::User, GetUsersByIdError> {
     let user = {
-      let this = self.0.lock().await;
-      this.get_user_by_id(id)?
+      let col = self.0.lock().await;
+      col
+        .get_by_id(&id)
+        .ok_or(GetUsersByIdError::NotFound(id))?
+        .clone()
     };
     Ok(user)
   }
 
   async fn delete_user(&self, id: String) -> Result<Self::User, DeleteUserError> {
     let user = {
-      let mut this = self.0.lock().await;
-      this.delete_user(id)?
+      let mut col = self.0.lock().await;
+      col.delete(&id)
     };
-    Ok(user)
+    user.ok_or(DeleteUserError::UserNotFound(id))
   }
 
   async fn update_user(&self, id: String, name: String) -> Result<Self::User, UpdateUserError> {
     let user = {
-      let mut this = self.0.lock().await;
-      this.update_user(id, name)?
+      let mut col = self.0.lock().await;
+      col
+        .update_user(&id, name)
+        .ok_or(UpdateUserError::UserNotFound(id))?
+        .clone()
     };
     Ok(user)
   }
