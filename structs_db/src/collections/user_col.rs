@@ -1,3 +1,5 @@
+use std::{borrow::Borrow, hash::Hash};
+
 use crate::core::{Collection, Record};
 
 #[derive(Clone)]
@@ -9,7 +11,7 @@ pub struct User {
 impl Record for User {
   type Id = String;
 
-  fn create_next_id(collection: &mut crate::core::Collection<Self>) -> Self::Id {
+  fn create_next_id(collection: &mut Collection<Self>) -> Self::Id {
     (collection.len() + 1).to_string()
   }
 
@@ -36,8 +38,11 @@ impl std::ops::DerefMut for UserCollection {
 }
 
 impl UserCollection {
-  #[allow(clippy::ptr_arg)]
-  pub fn update_user(&mut self, id: &String, nick: String) -> Option<&User> {
+  pub fn update_user<Id: ?Sized>(&mut self, id: &Id, nick: String) -> Option<&User>
+  where
+    String: Borrow<Id>,
+    Id: Hash + Eq,
+  {
     self.update(id, |u| {
       u.nick = nick;
     })

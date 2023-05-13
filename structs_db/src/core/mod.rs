@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{borrow::Borrow, collections::HashMap, hash::Hash};
 
 pub struct Collection<T: Record> {
   len: usize,
@@ -48,19 +48,31 @@ impl<T: Record> Collection<T> {
     self.data.values().cloned().collect()
   }
 
-  pub fn get_by_id(&self, id: &<T as Record>::Id) -> Option<&T> {
+  pub fn get_by_id<Id: ?Sized>(&self, id: &Id) -> Option<&T>
+  where
+    <T as Record>::Id: Borrow<Id>,
+    Id: Hash + Eq,
+  {
     self.data.get(id)
   }
 
-  pub fn delete(&mut self, id: &<T as Record>::Id) -> Option<T> {
+  pub fn delete<Id: ?Sized>(&mut self, id: &Id) -> Option<T>
+  where
+    <T as Record>::Id: Borrow<Id> + PartialEq<Id>,
+    Id: Hash + Eq,
+  {
     self.data.remove(id)
   }
 
-  pub fn update(&mut self, id: &<T as Record>::Id, f: impl FnOnce(&mut T)) -> Option<&T> {
+  pub fn update<Id: ?Sized>(&mut self, id: &Id, f: impl FnOnce(&mut T)) -> Option<&T>
+  where
+    <T as Record>::Id: Borrow<Id>,
+    Id: Hash + Eq,
+  {
     let record = self.data.get_mut(id)?;
     let mut record_to_update = record.clone();
     f(&mut record_to_update);
-    if record_to_update.id() == id {
+    if record_to_update.id() == record.id() {
       *record = record_to_update;
       Some(record)
     } else {
