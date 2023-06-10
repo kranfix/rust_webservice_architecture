@@ -2,7 +2,9 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
-use crate::users::{ClientStateProvider, UserForm, UserList, UserListStateProvider};
+use crate::users::{
+  ClientStateProvider, ClientStateProviderProps, UserForm, UserList, UserListStateProvider,
+};
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
@@ -33,15 +35,12 @@ pub fn App(cx: Scope) -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage(cx: Scope) -> impl IntoView {
-  view! { cx,
-    //<ClientStateProvider>
-      <div class="container">
-          <h1> { "Usuarios" } </h1>
-          //<UserListStateProvider>
-          //  <UserForm />
-          //  <UserList />
-          //</UserListStateProvider>
-      </div>
-    //</ClientStateProvider>
-  }
+  view! {cx,
+  <div class="container">
+    <h1> { "Usuarios" } </h1>
+    //<UserListStateProvider>
+    //  <UserForm />
+    //  <UserList />
+    //</UserListStateProvider>
+  </div>}
 }
