@@ -6,12 +6,25 @@ import {
   useSignal,
   useStore,
 } from "@builder.io/qwik";
-import { routeLoader$ } from "@builder.io/qwik-city";
+//import styles from "../users/index.module.css";
+import { Form, routeAction$, routeLoader$, zod$ } from "@builder.io/qwik-city";
 import { User, createUser, getUsers } from "../../users-client";
+import { z } from "zod"
 
 export const useGetUsers = routeLoader$(async () => {
+  console.log('useGetUsers')
   return await getUsers();
 });
+
+export const useCreateUser = routeAction$(
+  async (props) => {
+    console.log(props)
+    return await createUser(props.username);
+  },
+  zod$({
+    username: z.string().trim(),
+  })
+);
 
 interface UserListProps {
   users: User[];
@@ -33,18 +46,25 @@ export const UserList = component$<UserListProps>(({ users }) => {
 const AddUserTextField = component$<{}>(() => {
   const name = useSignal("");
   const canAdd = useComputed$(() => name.value.trim() != "");
+  const createUser = useCreateUser();
 
   return (
     <>
-      <input type="text" bind:value={name} />
-      <button
-        disabled={!canAdd.value}
-        onClick$={() => {
-          name.value = "";
-        }}
-      >
-        Add
-      </button>
+      
+      <Form action={createUser} onSubmitCompleted$={() => {
+            console.log('submit completed', name.value)
+            name.value = "";
+          }}>
+        <input type="text" name="username" bind:value={name} />
+        <button
+          disabled={!canAdd.value}
+          onClick$={() => {
+            console.log('button onClick', name.value)
+          }}
+        >
+          Add
+        </button>
+      </Form>
       <button
         onClick$={() => {
           name.value = "";
@@ -107,18 +127,31 @@ const useUsersStore = (firstLoad: Error | User[]) => {
 
 export default component$(() => {
   const usersFirstLoad = useGetUsers();
-  const users = useUsersStore(usersFirstLoad.value);
+  //const users = useUsersStore(usersFirstLoad.value);
 
+  // return (
+  //   <>
+  //     <h1>Users</h1>
+  //     {users.isLoading && <>... is loading</>}
+  //     {users.list === undefined ? (
+  //       <TryUsersAgain onClick$={() => users.tryAgain()} />
+  //     ) : (
+  //       <>
+  //         <AddUserTextField />
+  //         <UserList users={users.list} />
+  //       </>
+  //     )}
+  //   </>
+  // );
   return (
     <>
       <h1>Users</h1>
-      {users.isLoading && <>... is loading</>}
-      {users.list === undefined ? (
-        <TryUsersAgain onClick$={() => users.tryAgain()} />
+      {usersFirstLoad.value instanceof Error ? (
+        "<TryUsersAgain onClick$={() => users.tryAgain()} />"
       ) : (
         <>
           <AddUserTextField />
-          <UserList users={users.list} />
+          <UserList users={usersFirstLoad.value} />
         </>
       )}
     </>

@@ -6,13 +6,14 @@ export type User = {
 export const getUsers = async (): Promise<User[] | Error> => {
   let response: Response;
   try {
-    response = await fetch(`http://localhost:3000/users`, {
-      // headers: { Accept: "application/json" },
-    });
-  } catch {
+    console.log('[getUsers] before')
+    response = await fetch(`http://127.0.0.1:3000/users`);
+    console.log('[getUsers] After')
+  } catch (err){
+    console.log('[getUsers] err on fetch:', err)
     return new Error("Server did not response");
   }
-
+  console.log('[getUsers] validation OK')
   if (!response.ok) {
     console.log(`[getUsers] ${response.status} ${response.body}`);
     return new Error("");
@@ -27,17 +28,17 @@ export const getUsers = async (): Promise<User[] | Error> => {
 export const createUser = async (username: string): Promise<User | Error> => {
   let response: Response;
   try {
-    response = await fetch(`http://localhost:3000/users`, {
+    response = await fetch(`http://127.0.0.1:3000/users`, {
       method: "POST",
       body: JSON.stringify({ username }),
-      // headers: { Accept: "application/json" },
+      headers: { "content-type": "application/json" },
     });
   } catch {
     return new Error("Server did not response");
   }
 
   if (!response.ok) {
-    console.log(`[getUsers] ${response.status} ${response.body}`);
+    console.log(`[createUser] ${response.status} ${response.body}`);
     return new Error("");
   }
 
