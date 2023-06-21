@@ -1,6 +1,7 @@
 import {
   $,
   QRL,
+  Slot,
   component$,
   useComputed$,
   useSignal,
@@ -8,21 +9,33 @@ import {
 } from "@builder.io/qwik";
 //import styles from "../users/index.module.css";
 import { Form, routeAction$, routeLoader$, zod$ } from "@builder.io/qwik-city";
-import { User, createUser, getUsers } from "../../users-client";
-import { z } from "zod"
+import { User, createUser, deleteUserById, getUsers } from "../../users-client";
+import { z } from "zod";
+import { style, styled } from "styled-vanilla-extract/qwik";
+import { Row } from "./styles.css";
 
 export const useGetUsers = routeLoader$(async () => {
-  console.log('useGetUsers')
+  console.log("useGetUsers");
   return await getUsers();
 });
 
 export const useCreateUser = routeAction$(
   async (props) => {
-    console.log(props)
+    console.log(props);
     return await createUser(props.username);
   },
   zod$({
     username: z.string().trim(),
+  })
+);
+
+export const useDeleteUserById = routeAction$(
+  async (props) => {
+    console.log("useDeleteUserById", props);
+    return await deleteUserById(props.id);
+  },
+  zod$({
+    id: z.string().trim(),
   })
 );
 
@@ -31,12 +44,26 @@ interface UserListProps {
 }
 
 export const UserList = component$<UserListProps>(({ users }) => {
+  const deleteUserById = useDeleteUserById();
   return (
     <ul>
-      {users.map((u) => (
+      {users.map((user) => (
         <li>
-          <p>{u.id}</p>
-          <p>{u.username}</p>
+          <Form
+            action={deleteUserById}
+            onSubmitCompleted$={() => {
+              console.log("submit completed", user.id);
+            }}
+          >
+            <Row>
+              <div>
+                <p>{user.id}</p>
+                <p>{user.username}</p>
+              </div>
+              <input type="hidden" name="id" value={user.id} />
+              <CuykButton>X</CuykButton>
+            </Row>
+          </Form>
         </li>
       ))}
     </ul>
@@ -49,30 +76,32 @@ const AddUserTextField = component$<{}>(() => {
   const createUser = useCreateUser();
 
   return (
-    <>
-      
-      <Form action={createUser} onSubmitCompleted$={() => {
-            console.log('submit completed', name.value)
-            name.value = "";
-          }}>
+    <Row>
+      <Form
+        action={createUser}
+        onSubmitCompleted$={() => {
+          console.log("submit completed", name.value);
+          name.value = "";
+        }}
+      >
         <input type="text" name="username" bind:value={name} />
-        <button
+        <CuykButton
           disabled={!canAdd.value}
           onClick$={() => {
-            console.log('button onClick', name.value)
+            console.log("button onClick", name.value);
           }}
         >
           Add
-        </button>
+        </CuykButton>
       </Form>
-      <button
+      <CuykButton
         onClick$={() => {
           name.value = "";
         }}
       >
         Clear
-      </button>
-    </>
+      </CuykButton>
+    </Row>
   );
 });
 
@@ -84,7 +113,7 @@ const TryUsersAgain = component$<TryUsersAgainProps>(({ onClick$ }) => {
   return (
     <>
       <p>There was an error</p>
-      <button onClick$={onClick$}>Try again!</button>
+      <CuykButton onClick$={onClick$}>Try again!</CuykButton>
     </>
   );
 });
@@ -157,3 +186,18 @@ export default component$(() => {
     </>
   );
 });
+
+interface CuykButtonProps {
+  disabled?: boolean;
+  onClick$?: QRL<() => void>;
+}
+
+export const CuykButton = component$<CuykButtonProps>(
+  ({ disabled, onClick$ }) => {
+    return (
+      <button disabled={disabled ?? false} onClick$={onClick$}>
+        <Slot />
+      </button>
+    );
+  }
+);
