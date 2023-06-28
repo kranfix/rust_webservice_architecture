@@ -6,8 +6,9 @@ import {
   useComputed$,
   useSignal,
   useStore,
+  useTask$,
 } from "@builder.io/qwik";
-//import styles from "../users/index.module.css";
+import styles from "./index.module.css";
 import { Form, routeAction$, routeLoader$, zod$ } from "@builder.io/qwik-city";
 import {
   User,
@@ -100,13 +101,22 @@ export const UserList = component$<UserListProps>(({ users }) => {
         ))}
       </ul>
       <Modal title={"Edit User"} store={modalStore}>
-        {selectedUser.value && (
-          <EditUser
-            user={selectedUser.value}
-            onUpdate={$(() => {
-              modalStore.isOpen = false;
-            })}
-          />
+        {selectedUser.value && modalStore.isOpen && (
+          <Row>
+            <EditUser
+              user={selectedUser.value}
+              onUpdate={$(() => {
+                modalStore.isOpen = false;
+              })}
+            />
+            <CuykButton
+                onClick$={() => {
+                  modalStore.isOpen = false;
+                }}
+              >
+                X
+            </CuykButton>
+          </Row>
         )}
       </Modal>
     </>
@@ -148,7 +158,7 @@ const AddUserTextField = component$<{}>(() => {
           name.value = "";
         }}
       >
-        <input type="text" name="username" bind:value={name} />
+        <input type="text" name="username" bind:value={name} autoComplete="New username"/>
         <CuykButton
           disabled={!canAdd.value}
           onClick$={() => {
@@ -237,7 +247,7 @@ export default component$(() => {
   //   </>
   // );
   return (
-    <>
+    <div class={styles.div}>
       <h1>Users</h1>
       {usersFirstLoad.value instanceof Error ? (
         "<TryUsersAgain onClick$={() => users.tryAgain()} />"
@@ -247,7 +257,7 @@ export default component$(() => {
           <UserList users={usersFirstLoad.value} />
         </>
       )}
-    </>
+    </div>
   );
 });
 
@@ -259,7 +269,7 @@ interface CuykButtonProps {
 export const CuykButton = component$<CuykButtonProps>(
   ({ disabled, onClick$ }) => {
     return (
-      <button disabled={disabled} onClick$={onClick$}>
+      <button class={styles.button} disabled={disabled} onClick$={onClick$}>
         <Slot />
       </button>
     );
@@ -278,42 +288,25 @@ export interface ModalProps {
 }
 
 export const Modal = component$(({ title, store }: ModalProps) => {
-  if (store.isOpen)
-    return (
-      <div
-        class="relative z-overlay"
-        aria-labelledby={title}
-        role="dialog"
-        aria-modal="true"
-      >
-        <Overlay />
+  const dialog = useSignal<HTMLDialogElement>()
 
-        <div class="fixed inset-0 overflow-y-auto">
-          <div class="flex items-center justify-center min-h-full p-4 text-center sm:items-center sm:p-0">
-            <Panel>
-              <button onClick$={() => (store.isOpen = false)}>
-                close modal
-              </button>
-              <Slot />
-            </Panel>
-          </div>
-        </div>
+  useTask$(({track}) => {
+    const isOpen = track(() => store.isOpen)
+    console.log("MARK A", isOpen)
+    if(isOpen) {
+      console.log("MARK B", dialog.value)
+      dialog.value?.showModal()
+    } else {
+      dialog.value?.close()
+    }
+  })
+  
+  return (
+    <dialog ref={dialog}>
+      <div>
+        {title && <h3 style="color:black">{title}</h3>}
+        <Slot/>
       </div>
-    );
-
-  return null;
-});
-
-export const Overlay = component$(() => {
-  return (
-    <div class="fixed inset-0 transition-opacity bg-black bg-opacity-40 backdrop-blur-sm" />
-  );
-});
-
-export const Panel = component$(() => {
-  return (
-    <div class="relative p-8 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:w-full sm:max-w-lg">
-      <Slot />
-    </div>
+    </dialog>
   );
 });

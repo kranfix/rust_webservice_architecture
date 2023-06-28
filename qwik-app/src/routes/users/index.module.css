@@ -32,3 +32,8 @@
   cursor: auto;
   background-color: gray;
 }
+
+.div{
+  padding: 13px 16px;
+  margin-inline: 8px;
+}
