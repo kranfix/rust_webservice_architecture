@@ -18,7 +18,6 @@ import {
   updateUserById,
 } from "../../users-client";
 import { z } from "zod";
-import { style, styled } from "styled-vanilla-extract/qwik";
 import { Row } from "./styles.css";
 
 export const useGetUsers = routeLoader$(async () => {
@@ -292,9 +291,7 @@ export const Modal = component$(({ title, store }: ModalProps) => {
 
   useTask$(({track}) => {
     const isOpen = track(() => store.isOpen)
-    console.log("MARK A", isOpen)
     if(isOpen) {
-      console.log("MARK B", dialog.value)
       dialog.value?.showModal()
     } else {
       dialog.value?.close()
