@@ -1,3 +1,14 @@
+h1 {
+  font-size: 3.2rem;
+  text-align: center;
+}
+
+body {
+  background: var(--qwik-dark-background);
+  color: var(--qwik-dark-text);
+  overflow-x: hidden;
+}
+
 .button {
   appearance: button;
   background-color: #1899D6;
@@ -11,21 +22,16 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: .8px;
-  line-height: 20px;
-  margin: 5;
-  outline: none;
+  line-height: 17px;
   overflow: visible;
-  padding: 13px 16px;
+  width: 100px;
+  height: 22px;
+  padding: 2px 2px;
+  align-items: center;
   margin-inline: 8px;
   text-align: center;
   text-transform: uppercase;
   touch-action: manipulation;
-  transform: translateZ(0);
-  transition: filter .2s;
-  user-select: none;
-  -webkit-user-select: none;
-  vertical-align: middle;
-  white-space: nowrap;
 }
 
 .button:disabled {
@@ -36,4 +42,14 @@
 .div{
   padding: 13px 16px;
   margin-inline: 8px;
+}
+
+.hero {
+  display: flex;
+  vertical-align: middle;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
 }

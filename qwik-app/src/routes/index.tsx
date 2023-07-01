@@ -1,112 +1,310 @@
-import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import {
+  $,
+  QRL,
+  Slot,
+  component$,
+  useComputed$,
+  useSignal,
+  useStore,
+  useTask$,
+} from "@builder.io/qwik";
+import styles from "./index.module.css";
+import { Form, routeAction$, routeLoader$, zod$ } from "@builder.io/qwik-city";
+import {
+  User,
+  createUser,
+  deleteUserById,
+  getUsers,
+  updateUserById,
+} from "../users-client";
+import { z } from "zod";
+import { Row } from "./styles.css";
 
-import Counter from '~/components/starter/counter/counter';
-import Hero from '~/components/starter/hero/hero';
-import Infobox from '~/components/starter/infobox/infobox';
-import Starter from '~/components/starter/next-steps/next-steps';
+export const useGetUsers = routeLoader$(async () => {
+  console.log("useGetUsers");
+  return await getUsers();
+});
 
-export default component$(() => {
+export const useCreateUser = routeAction$(
+  async (props) => {
+    console.log(props);
+    return await createUser(props.username);
+  },
+  zod$({
+    username: z.string().trim(),
+  })
+);
+
+export const useDeleteUserById = routeAction$(
+  async (props) => {
+    console.log("useDeleteUserById", props);
+    return await deleteUserById(props.id);
+  },
+  zod$({
+    id: z.string().trim(),
+  })
+);
+
+export const useUpdateUserById = routeAction$(
+  async (props) => {
+    console.log("useUpdateUserById", props.id);
+    return await updateUserById(props.id, props.newUsername);
+  },
+  zod$({
+    id: z.string().trim(),
+    newUsername: z.string().trim(),
+  })
+);
+
+interface UserListProps {
+  users: User[];
+}
+
+export const UserList = component$<UserListProps>(({ users }) => {
+  const deleteUserById = useDeleteUserById();
+  const selectedUser = useSignal<User | null>(null);
+  const modalStore = useStore({
+    isOpen: false,
+  });
+  return (
+    <div class={['container', styles.hero]}>
+      <ul>
+        {users.map((user) => (
+          <li>
+            <Row>
+              <div>
+                <p>{user.username}</p>
+              </div>
+
+              <CuykButton
+                onClick$={() => {
+                  selectedUser.value = user;
+                  modalStore.isOpen = true;
+                }}
+              >
+                PC
+              </CuykButton>
+
+              <Form
+                action={deleteUserById}
+                onSubmitCompleted$={() => {
+                  console.log("submit completed", user.id);
+                }}
+              >
+                <input type="hidden" name="id" value={user.id} />
+                <CuykButton>X</CuykButton>
+              </Form>
+            </Row>
+          </li>
+        ))}
+      </ul>
+      <Modal title={"Edit User"} store={modalStore}>
+        {selectedUser.value && modalStore.isOpen && (
+          <Row>
+            <EditUser
+              user={selectedUser.value}
+              onUpdate={$(() => {
+                modalStore.isOpen = false;
+              })}
+            />
+            <CuykButton
+                onClick$={() => {
+                  modalStore.isOpen = false;
+                }}
+              >
+                X
+            </CuykButton>
+          </Row>
+        )}
+      </Modal>
+      </div>
+  );
+});
+
+interface EditUserProps {
+  user: User;
+  onUpdate: QRL<() => void>;
+}
+
+const EditUser = component$<EditUserProps>(({ user, onUpdate }) => {
+  const username = useSignal(user.username);
+  const updateUserById = useUpdateUserById();
+  const disableUpdate = useComputed$(() => {
+    const trimmed = username.value.trim();
+    return trimmed.length == 0 || trimmed == user.username;
+  });
+  return (
+    <Form action={updateUserById} onSubmit$={onUpdate}>
+      <input type="hidden" name="id" value={user.id} />
+      <input type="text" name="newUsername" bind:value={username} />
+      <CuykButton disabled={disableUpdate.value}>Update</CuykButton>
+    </Form>
+  );
+});
+
+const AddUserTextField = component$<{}>(() => {
+  const name = useSignal("");
+  const canAdd = useComputed$(() => name.value.trim() != "");
+  const createUser = useCreateUser();
+
+  return (
+    <div class={['container', styles.hero]}>
+      <Row>
+        <Form
+          action={createUser}
+          onSubmitCompleted$={() => {
+            console.log("submit completed", name.value);
+            name.value = "";
+          }}
+        >
+          <input type="text" name="username" bind:value={name} autoComplete="New username"/>
+          <CuykButton
+            disabled={!canAdd.value}
+            onClick$={() => {
+              console.log("button onClick", name.value);
+            }}
+          >
+            Add
+          </CuykButton>
+        </Form>
+        <CuykButton
+          onClick$={() => {
+            name.value = "";
+          }}
+        >
+          Clear
+        </CuykButton>
+      </Row>
+    </div>
+  );
+});
+
+interface TryUsersAgainProps {
+  onClick$: QRL<() => void>;
+}
+
+const TryUsersAgain = component$<TryUsersAgainProps>(({ onClick$ }) => {
   return (
     <>
-      <Hero />
-      <Starter />
-
-      <div role="presentation" class="ellipsis"></div>
-      <div role="presentation" class="ellipsis ellipsis-purple"></div>
-
-      <div class="container container-center container-spacing-xl">
-        <h3>
-          You can <span class="highlight">count</span>
-          <br /> on me
-        </h3>
-        <Counter />
-      </div>
-
-      <div class="container container-flex">
-        <Infobox>
-          <div q:slot="title" class="icon icon-cli">
-            CLI Commands
-          </div>
-          <>
-            <p>
-              <code>npm run dev</code>
-              <br />
-              Starts the development server and watches for changes
-            </p>
-            <p>
-              <code>npm run preview</code>
-              <br />
-              Creates production build and starts a server to preview it
-            </p>
-            <p>
-              <code>npm run build</code>
-              <br />
-              Creates production build
-            </p>
-            <p>
-              <code>npm run qwik add</code>
-              <br />
-              Runs the qwik CLI to add integrations
-            </p>
-          </>
-        </Infobox>
-
-        <div>
-          <Infobox>
-            <div q:slot="title" class="icon icon-apps">
-              Example Apps
-            </div>
-            <p>
-              Have a look at the <a href="/demo/flower">Flower App</a> or the{' '}
-              <a href="/demo/todolist">Todo App</a>.
-            </p>
-          </Infobox>
-
-          <Infobox>
-            <div q:slot="title" class="icon icon-community">
-              Community
-            </div>
-            <ul>
-              <li>
-                <span>Questions or just want to say hi? </span>
-                <a href="https://qwik.builder.io/chat" target="_blank">
-                  Chat on discord!
-                </a>
-              </li>
-              <li>
-                <span>Follow </span>
-                <a href="https://twitter.com/QwikDev" target="_blank">
-                  @QwikDev
-                </a>
-                <span> on Twitter</span>
-              </li>
-              <li>
-                <span>Open issues and contribute on </span>
-                <a href="https://github.com/BuilderIO/qwik" target="_blank">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <span>Watch </span>
-                <a href="https://qwik.builder.io/media/" target="_blank">
-                  Presentations, Podcasts, Videos, etc.
-                </a>
-              </li>
-            </ul>
-          </Infobox>
-        </div>
-      </div>
+      <p>There was an error</p>
+      <CuykButton onClick$={onClick$}>Try again!</CuykButton>
     </>
   );
 });
 
-export const head: DocumentHead = {
-  title: 'Welcome to Qwik',
-  meta: [
-    {
-      name: 'description',
-      content: 'Qwik site description',
-    },
-  ],
+interface UsersStore {
+  isLoading: boolean;
+  list: undefined | User[];
+  tryAgain: QRL<(this: UsersStore) => Promise<void>>;
+  createOne: QRL<(this: UsersStore, username: string) => Promise<void>>;
+}
+
+const useUsersStore = (firstLoad: Error | User[]) => {
+  const users = useStore<UsersStore>({
+    isLoading: false,
+    list: firstLoad instanceof Error ? undefined : [...firstLoad],
+    tryAgain: $(async function (this: UsersStore) {
+      this.isLoading = true;
+      const result = await getUsers();
+      this.isLoading = false;
+      if (result instanceof Error) {
+        console.log("Show dialog");
+      } else {
+        this.list = result;
+      }
+    }),
+    createOne: $(async function (this: UsersStore, username: string) {
+      this.isLoading = true;
+      const result = await createUser(username);
+      this.isLoading = false;
+      if (result instanceof Error) {
+        console.log("Show dialog");
+      } else {
+        this.list ??= [];
+        this.list.push(result);
+      }
+    }),
+  });
+  return users;
 };
+
+export default component$(() => {
+  const usersFirstLoad = useGetUsers();
+  //const users = useUsersStore(usersFirstLoad.value);
+
+  // return (
+  //   <>
+  //     <h1>Users</h1>
+  //     {users.isLoading && <>... is loading</>}
+  //     {users.list === undefined ? (
+  //       <TryUsersAgain onClick$={() => users.tryAgain()} />
+  //     ) : (
+  //       <>
+  //         <AddUserTextField />
+  //         <UserList users={users.list} />
+  //       </>
+  //     )}
+  //   </>
+  // );
+  return (
+    <div class={styles.div}>
+      <h1>Users</h1>
+      {usersFirstLoad.value instanceof Error ? (
+        "<TryUsersAgain onClick$={() => users.tryAgain()} />"
+      ) : (
+        <>
+          <AddUserTextField />
+          <UserList users={usersFirstLoad.value} />
+        </>
+      )}
+    </div>
+  );
+});
+
+interface CuykButtonProps {
+  disabled?: boolean;
+  onClick$?: QRL<() => void>;
+}
+
+export const CuykButton = component$<CuykButtonProps>(
+  ({ disabled, onClick$ }) => {
+    return (
+      <button class={styles.button} disabled={disabled} onClick$={onClick$}>
+        <Slot />
+      </button>
+    );
+  }
+);
+
+///////////
+
+export interface ModalStore {
+  isOpen: boolean;
+}
+
+export interface ModalProps {
+  title: string;
+  store: ModalStore;
+}
+
+export const Modal = component$(({ title, store }: ModalProps) => {
+  const dialog = useSignal<HTMLDialogElement>()
+
+  useTask$(({track}) => {
+    const isOpen = track(() => store.isOpen)
+    if(isOpen) {
+      dialog.value?.showModal()
+    } else {
+      dialog.value?.close()
+    }
+  })
+  
+  return (
+    <dialog ref={dialog}>
+      <div>
+        {title && <h3 style="color:black">{title}</h3>}
+        <Slot/>
+      </div>
+    </dialog>
+  );
+});
