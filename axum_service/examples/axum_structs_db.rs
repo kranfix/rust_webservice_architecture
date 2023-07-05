@@ -5,6 +5,8 @@ use structs_db::UserDB;
 
 #[tokio::main]
 async fn main() {
+  env_logger::init();
+
   let user_repo = Arc::new(UserDB::default());
   let user_routes = axum_service::create_user_routes!(user_repo);
 

@@ -13,7 +13,9 @@ tracing = "0.1"
 domain = { path="../domain" }
 tower-http = {version="0.4.0", features=["cors"]}
 service_client = { path="../service_client" }
+log = "0.4.17"
 
 [dev-dependencies]
 structs_db = { path="../structs_db" }
 surrealdb_reqwest_adapter = { path="../surrealdb_reqwest_adapter" }
+env_logger = "0.10.0"

@@ -34,6 +34,7 @@ pub async fn create_user<UR: UserRepo>(
       (StatusCode::OK, Json(Reply::Data(user_reply)))
     }
     Err(e) => {
+      log::warn!("create_user: {}", e);
       let status_code = match e {
         domain::CreateUserError::NameBadFormatted => StatusCode::BAD_REQUEST,
         domain::CreateUserError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
@@ -51,10 +52,11 @@ pub async fn get_users<UR: UserRepo>(
   let users = match users_result {
     Ok(users) => users,
     Err(e) => {
+      log::warn!("get_users: {}", e);
       return (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(Reply::Err(e.to_string())),
-      )
+      );
     }
   };
   let reply = users.into_iter().map(UserReply::from).collect::<Vec<_>>();
@@ -68,7 +70,10 @@ pub async fn get_user_by_id<UR: UserRepo>(
   let result = user_repo.get_user_by_id(id).await;
   let err = match result {
     Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
-    Err(e) => e,
+    Err(e) => {
+      log::warn!("get_user_by_id: {}", e);
+      e
+    }
   };
 
   let status_code = match &err {
@@ -85,7 +90,10 @@ pub async fn delete_user<UR: UserRepo>(
   let res = user_repo.delete_user(id).await;
   let err = match res {
     Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
-    Err(e) => e,
+    Err(e) => {
+      log::warn!("delete_user: {}", e);
+      e
+    }
   };
 
   let status_code = match &err {
@@ -103,7 +111,10 @@ pub async fn update_user<UR: UserRepo>(
   let res = user_repo.update_user(id, payload.username).await;
   let err = match res {
     Ok(user) => return (StatusCode::OK, Json(Reply::Data(UserReply::from(user)))),
-    Err(e) => e,
+    Err(e) => {
+      log::warn!("update_user: {}", e);
+      e
+    }
   };
 
   let status_code = match &err {
