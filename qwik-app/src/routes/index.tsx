@@ -67,7 +67,7 @@ export const UserList = component$<UserListProps>(({ users }) => {
     isOpen: false,
   });
   return (
-    <div class={['container', styles.hero]}>
+    <div class={["container", styles.hero]}>
       <ul>
         {users.map((user) => (
           <li>
@@ -82,7 +82,7 @@ export const UserList = component$<UserListProps>(({ users }) => {
                   modalStore.isOpen = true;
                 }}
               >
-                PC
+                <i class="mdi mdi-pencil-outline"></i>
               </CuykButton>
 
               <Form
@@ -92,7 +92,9 @@ export const UserList = component$<UserListProps>(({ users }) => {
                 }}
               >
                 <input type="hidden" name="id" value={user.id} />
-                <CuykButton>X</CuykButton>
+                <CuykButton>
+                  <i class="mdi mdi-trash-can"></i>
+                </CuykButton>
               </Form>
             </Row>
           </li>
@@ -108,16 +110,16 @@ export const UserList = component$<UserListProps>(({ users }) => {
               })}
             />
             <CuykButton
-                onClick$={() => {
-                  modalStore.isOpen = false;
-                }}
-              >
-                X
+              onClick$={() => {
+                modalStore.isOpen = false;
+              }}
+            >
+              <i class="mdi mdi-close"></i>
             </CuykButton>
           </Row>
         )}
       </Modal>
-      </div>
+    </div>
   );
 });
 
@@ -137,7 +139,9 @@ const EditUser = component$<EditUserProps>(({ user, onUpdate }) => {
     <Form action={updateUserById} onSubmit$={onUpdate}>
       <input type="hidden" name="id" value={user.id} />
       <input type="text" name="newUsername" bind:value={username} />
-      <CuykButton disabled={disableUpdate.value}>Update</CuykButton>
+      <CuykButton disabled={disableUpdate.value}>
+        <i class="mdi mdi-check"></i>
+      </CuykButton>
     </Form>
   );
 });
@@ -148,7 +152,7 @@ const AddUserTextField = component$<{}>(() => {
   const createUser = useCreateUser();
 
   return (
-    <div class={['container', styles.hero]}>
+    <div class={["container", styles.hero]}>
       <Row>
         <Form
           action={createUser}
@@ -157,14 +161,19 @@ const AddUserTextField = component$<{}>(() => {
             name.value = "";
           }}
         >
-          <input type="text" name="username" bind:value={name} autoComplete="New username"/>
+          <input
+            type="text"
+            name="username"
+            bind:value={name}
+            autoComplete="New username"
+          />
           <CuykButton
             disabled={!canAdd.value}
             onClick$={() => {
               console.log("button onClick", name.value);
             }}
           >
-            Add
+            <i class="mdi mdi-plus"></i>
           </CuykButton>
         </Form>
         <CuykButton
@@ -172,7 +181,7 @@ const AddUserTextField = component$<{}>(() => {
             name.value = "";
           }}
         >
-          Clear
+          <i class="mdi mdi-eraser"></i>
         </CuykButton>
       </Row>
     </div>
@@ -288,22 +297,22 @@ export interface ModalProps {
 }
 
 export const Modal = component$(({ title, store }: ModalProps) => {
-  const dialog = useSignal<HTMLDialogElement>()
+  const dialog = useSignal<HTMLDialogElement>();
 
-  useTask$(({track}) => {
-    const isOpen = track(() => store.isOpen)
-    if(isOpen) {
-      dialog.value?.showModal()
+  useTask$(({ track }) => {
+    const isOpen = track(() => store.isOpen);
+    if (isOpen) {
+      dialog.value?.showModal();
     } else {
-      dialog.value?.close()
+      dialog.value?.close();
     }
-  })
-  
+  });
+
   return (
     <dialog ref={dialog}>
       <div>
         {title && <h3 style="color:black">{title}</h3>}
-        <Slot/>
+        <Slot />
       </div>
     </dialog>
   );
