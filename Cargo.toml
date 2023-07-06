@@ -13,5 +13,6 @@ members = [
   "service_client",
   "surrealdb_reqwest_adapter",
   "cli_ent",
-  "users_yew"
+  "users_yew",
+  "users_leptos"
 ]
