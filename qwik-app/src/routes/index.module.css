@@ -1,0 +1,55 @@
+h1 {
+  font-size: 3.2rem;
+  text-align: center;
+}
+
+body {
+  background: var(--qwik-dark-background);
+  color: var(--qwik-dark-text);
+  overflow-x: hidden;
+}
+
+.button {
+  appearance: button;
+  background-color: #1899D6;
+  border: solid transparent;
+  border-radius: 16px;
+  border-width: 0 0 4px;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-family: din-round,sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  line-height: 17px;
+  overflow: visible;
+  width: 21px;
+  height: 21px;
+  padding: 2px 2px;
+  align-items: center;
+  margin-inline: 8px;
+  text-align: center;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.button:disabled {
+  cursor: auto;
+  background-color: gray;
+}
+
+.div{
+  padding: 13px 16px;
+  margin-inline: 8px;
+}
+
+.hero {
+  display: flex;
+  vertical-align: middle;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
